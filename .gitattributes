@@ -1,0 +1,7 @@
+# Normaliza finales de línea a LF en el repo (consistente entre Windows/macOS/Linux).
+* text=auto eol=lf
+
+# Binarios: sin conversión.
+*.png binary
+*.ico binary
+*.icns binary

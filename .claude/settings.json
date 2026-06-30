@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(bun install)",
+      "Bash(bun add:*)",
+      "Bash(bun remove:*)",
+      "Bash(bun run:*)",
+      "Bash(bun test:*)",
+      "Bash(bunx:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo build:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo clippy:*)"
+    ],
+    "deny": [],
+    "ask": [
+      "Bash(git push:*)",
+      "Bash(bun run tauri build:*)"
+    ]
+  }
+}

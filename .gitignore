@@ -1,0 +1,22 @@
+# Claude Code — personales (no commitear)
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Dependencias
+node_modules/
+
+# Build / output
+dist/
+build/
+
+# Tauri / Rust
+src-tauri/target/
+
+# Tests
+coverage/
+playwright-report/
+test-results/
+
+# Logs y temporales
+*.log
+.DS_Store
