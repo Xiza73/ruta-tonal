@@ -13,7 +13,9 @@ entrenar notas musicales. Tiene dos secciones que funcionan en paralelo:
   Configurable en: notación (`C1, C2…` y/o `Do, Re…`), tamaño del teclado, tipo
   de sonido, entre otros.
 - **Superior — Identificador de notas por micrófono:** vía Web Audio API detecta
-  el pitch de lo que se toca o canta y muestra la nota.
+  el pitch de lo que se toca o canta y lo muestra como un **gráfico de afinación
+  en el tiempo** (piano roll vertical + traza que scrollea, estilo entrenador de
+  canto tipo *Nail the Pitch*).
 
 Las dos secciones son **independientes en principio**, pero queda la puerta
 abierta a que el detector reconozca lo que suena en el teclado virtual.
@@ -26,7 +28,8 @@ depender de internet.
 **MVP (primero esto):**
 1. Teclado virtual que suena y resalta la nota tocada.
 2. Configuración del teclado: notación (C/Do), tamaño, tipo de sonido.
-3. Detector de pitch por micrófono que muestra la nota detectada en tiempo real.
+3. Detector de pitch por micrófono con **gráfico de afinación en el tiempo**
+   (piano roll vertical + traza scrolleando), no solo la nota actual.
 
 **Fuera del MVP (después):** sync entre dispositivos, librerías de sonidos
 extra, que el detector vincule lo del teclado, guardado de configuraciones en la
