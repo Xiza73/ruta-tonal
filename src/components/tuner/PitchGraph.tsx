@@ -12,14 +12,14 @@ const INITIAL_CENTER = 60; // C4
 // El canvas usa strings de color (no clases Tailwind). Estos valores REFLEJAN los
 // tokens de index.css (@theme). Si algún día hay theming, leerlos con getComputedStyle.
 const COLORS = {
-  bg: "#0b1120", // --color-base
-  rowNatural: "#131c30", // --color-surface (fila de tecla blanca)
-  rowSharp: "#0d1526", // entre base y surface (fila de tecla negra)
-  octaveLine: "#3a496b", // borde algo más vivo, para orientarse en cada C
-  label: "#e8ecf5", // --color-fg
-  labelDim: "#5b6a86", // --color-fg-subtle
-  block: "rgba(251, 191, 36, 0.55)", // --color-pitch (historial)
-  blockTip: "rgba(251, 191, 36, 0.95)", // --color-pitch (nota actual, más viva)
+  bg: "#0b0f1c", // ~ink-950 / --color-base
+  rowNatural: "#12172a", // ~ink-900 / --color-surface (fila de tecla blanca)
+  rowSharp: "#0e1322", // entre base y surface (fila de tecla negra)
+  octaveLine: "#37425f", // ~ink-700, para orientarse en cada C
+  label: "#f4f6fb", // ~ink-50 / --color-fg
+  labelDim: "#7a869f", // ~ink-500 / --color-fg-subtle
+  block: "rgba(245, 181, 43, 0.55)", // --color-pitch (historial)
+  blockTip: "rgba(245, 181, 43, 0.95)", // --color-pitch (nota actual, más viva)
   trace: "#ffffff",
   traceGlow: "rgba(255, 255, 255, 0.55)",
 };

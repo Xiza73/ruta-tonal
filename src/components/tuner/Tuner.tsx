@@ -80,7 +80,8 @@ export function Tuner() {
         type="button"
         onClick={listening ? stop : start}
         className={cn(
-          "rounded-md px-4 py-2 text-sm font-medium text-accent-fg",
+          "rounded-md px-4 py-2 text-sm font-medium text-accent-fg shadow-card transition-colors",
+          "focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none",
           listening ? "bg-danger hover:bg-danger-hover" : "bg-accent hover:bg-accent-hover",
         )}
       >
