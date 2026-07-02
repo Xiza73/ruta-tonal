@@ -35,6 +35,7 @@ function Toggle({
       onClick={onClick}
       className={cn(
         "rounded-md px-3 py-1 text-sm font-medium transition-colors",
+        "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
         active
           ? "bg-accent text-accent-fg"
           : "bg-elevated text-fg-muted hover:bg-border hover:text-fg",
@@ -55,7 +56,7 @@ export function KeyboardConfig() {
   const setSoundType = useKeyboardStore((s) => s.setSoundType);
 
   return (
-    <div className="flex flex-wrap items-start justify-center gap-6 rounded-lg bg-surface p-4">
+    <div className="flex flex-wrap items-start justify-center gap-x-8 gap-y-4">
       <Field label="Notación">
         <Toggle active={notation === "scientific"} onClick={() => setNotation("scientific")}>
           C, D, E

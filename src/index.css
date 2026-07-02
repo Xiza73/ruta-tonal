@@ -1,28 +1,76 @@
 @import "tailwindcss";
 
 /*
- * Tokens semánticos: una sola fuente de verdad para el color.
- * Nombrados por ROL (surface, fg, accent), NO por valor (slate-800).
- * Cambiás un token acá → cambia toda la app. Generan utilidades de Tailwind:
- * --color-surface → bg-surface / text-surface / border-surface, etc.
+ * Sistema de diseño en 3 capas (Refactoring UI + Tailwind v4):
+ *   1) Primitivas: escalas OKLCH (~9 tonos por hue) + sombras.
+ *   2) Semántico: tokens por rol que referencian primitivas (:root).
+ *   3) @theme inline: expone lo semántico como utilidades (bg-surface, text-fg…).
+ * Los componentes usan SOLO tokens semánticos, nunca un hex ni una primitiva.
  */
+
+/* 1) Primitivas */
 @theme {
-  --color-base: #0b1120; /* fondo de la app */
-  --color-surface: #131c30; /* paneles / tarjetas */
-  --color-elevated: #1f2a44; /* elementos elevados (botones idle) */
-  --color-border: #2b3852;
+  /* Neutral frío (ink) */
+  --color-ink-50: oklch(98% 0.004 260);
+  --color-ink-100: oklch(95% 0.006 260);
+  --color-ink-200: oklch(89% 0.01 260);
+  --color-ink-300: oklch(80% 0.014 260);
+  --color-ink-400: oklch(68% 0.02 262);
+  --color-ink-500: oklch(56% 0.025 264);
+  --color-ink-600: oklch(46% 0.03 266);
+  --color-ink-700: oklch(38% 0.032 266);
+  --color-ink-800: oklch(28% 0.03 268);
+  --color-ink-900: oklch(21% 0.028 270);
+  --color-ink-950: oklch(16% 0.024 270);
 
-  --color-fg: #e8ecf5; /* texto principal */
-  --color-fg-muted: #97a3bd; /* texto secundario */
-  --color-fg-subtle: #5b6a86; /* texto terciario / etiquetas sobre claro */
+  /* Acento índigo (brand) */
+  --color-brand-400: oklch(70% 0.16 276);
+  --color-brand-500: oklch(62% 0.19 276);
+  --color-brand-600: oklch(55% 0.2 276);
 
-  --color-accent: #6366f1; /* acción primaria (indigo) */
-  --color-accent-hover: #818cf8;
-  --color-accent-fg: #ffffff;
+  /* Elevación: sombras de dos capas (ambiente suave + directa) */
+  --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.3), 0 6px 16px oklch(0% 0 0 / 0.28);
+  --shadow-raised: 0 2px 4px oklch(0% 0 0 / 0.32), 0 10px 24px oklch(0% 0 0 / 0.34);
+}
 
-  --color-danger: #ef4444;
-  --color-danger-hover: #f87171;
+/* 2) Semántico (por rol) */
+:root {
+  --background: var(--color-ink-950);
+  --surface: var(--color-ink-900);
+  --elevated: var(--color-ink-800);
+  --border: var(--color-ink-700);
 
-  --color-success: #34d399; /* nota afinada */
-  --color-pitch: #fbbf24; /* traza / bloques del tuner (ámbar) */
+  --fg: var(--color-ink-50);
+  --fg-muted: var(--color-ink-400);
+  --fg-subtle: var(--color-ink-500);
+
+  --accent: var(--color-brand-500);
+  --accent-hover: var(--color-brand-400);
+  --accent-fg: oklch(100% 0 0);
+
+  --danger: oklch(63% 0.2 25);
+  --danger-hover: oklch(70% 0.18 25);
+  --success: oklch(76% 0.15 162); /* nota afinada */
+  --pitch: oklch(80% 0.16 82); /* traza/bloques del tuner (ámbar) */
+}
+
+/* 3) Exposición como utilidades de Tailwind */
+@theme inline {
+  --color-base: var(--background);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-border: var(--border);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-success: var(--success);
+  --color-pitch: var(--pitch);
 }
