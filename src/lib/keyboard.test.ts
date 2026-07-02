@@ -1,4 +1,5 @@
 import {
+  buildProfile,
   DEFAULT_PROFILE,
   keysForProfile,
   midiForCode,
@@ -47,6 +48,32 @@ describe("keysForProfile", () => {
   test("respeta la notación del perfil", () => {
     const keys = keysForProfile({ ...DEFAULT_PROFILE, notation: "solfege" });
     expect(keys[0].name).toBe("Do");
+  });
+});
+
+describe("buildProfile", () => {
+  test("arma el perfil desde los ajustes", () => {
+    const profile = buildProfile({
+      notation: "solfege",
+      startMidi: 48,
+      octaves: 2,
+      soundType: "square",
+    });
+    expect(profile.range).toEqual({ low: 48, high: 72 });
+    expect(profile.notation).toBe("solfege");
+    expect(profile.soundType).toBe("square");
+  });
+
+  test("el perfil resultante genera las teclas correctas", () => {
+    const profile = buildProfile({
+      notation: "scientific",
+      startMidi: 60,
+      octaves: 1,
+      soundType: "sine",
+    });
+    const keys = keysForProfile(profile);
+    expect(keys).toHaveLength(13); // C4–C5
+    expect(keys[0].label).toBe("C4");
   });
 });
 

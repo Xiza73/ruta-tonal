@@ -86,3 +86,24 @@ export const DEFAULT_PROFILE: KeyboardProfile = {
   soundType: "triangle",
   keyMap: DEFAULT_KEYMAP,
 };
+
+/** Ajustes configurables del teclado (lo que el usuario toca en el panel). */
+export interface ProfileSettings {
+  notation: Notation;
+  /** Nota MIDI base (C de la octava más grave). */
+  startMidi: number;
+  /** Cantidad de octavas. */
+  octaves: number;
+  soundType: OscillatorType;
+}
+
+/** Construye un KeyboardProfile a partir de los ajustes + el keymap default. */
+export function buildProfile(settings: ProfileSettings): KeyboardProfile {
+  return {
+    name: "Custom",
+    range: octaveRange(settings.startMidi, settings.octaves),
+    notation: settings.notation,
+    soundType: settings.soundType,
+    keyMap: DEFAULT_KEYMAP,
+  };
+}
