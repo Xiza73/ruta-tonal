@@ -111,15 +111,22 @@ export interface ProfileSettings {
   /** Cantidad de octavas. */
   octaves: number;
   soundType: OscillatorType;
+  /** Mapeo de teclas; por defecto DEFAULT_KEYMAP. */
+  keyMap?: Record<string, number>;
 }
 
-/** Construye un KeyboardProfile a partir de los ajustes + el keymap default. */
+/** Construye un KeyboardProfile a partir de los ajustes. */
 export function buildProfile(settings: ProfileSettings): KeyboardProfile {
   return {
     name: "Custom",
     range: octaveRange(settings.startMidi, settings.octaves),
     notation: settings.notation,
     soundType: settings.soundType,
-    keyMap: DEFAULT_KEYMAP,
+    keyMap: settings.keyMap ?? DEFAULT_KEYMAP,
   };
+}
+
+/** Etiqueta corta de un KeyboardEvent.code: "KeyZ" → "Z", "Digit2" → "2". */
+export function keyLabel(code: string): string {
+  return code.replace(/^Key/, "").replace(/^Digit/, "");
 }

@@ -1,6 +1,7 @@
 import {
   buildProfile,
   DEFAULT_PROFILE,
+  keyLabel,
   keysForProfile,
   midiForCode,
   octaveRange,
@@ -74,6 +75,13 @@ describe("buildProfile", () => {
     const keys = keysForProfile(profile);
     expect(keys).toHaveLength(13); // C4–C5
     expect(keys[0].label).toBe("C4");
+  });
+});
+
+describe("keyLabel", () => {
+  test("prettifica el code de la tecla", () => {
+    expect(keyLabel("KeyZ")).toBe("Z");
+    expect(keyLabel("Digit2")).toBe("2");
   });
 });
 
