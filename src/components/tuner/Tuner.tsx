@@ -73,20 +73,20 @@ export function Tuner() {
   return (
     <section className="flex w-full flex-col items-center gap-4">
       <PitchGraph bufferRef={bufferRef} capacity={CAPACITY} notation="scientific" />
-      <p aria-live="polite" className="text-sm text-slate-300">
+      <p aria-live="polite" className="text-sm text-fg">
         {listening ? (label ? `Nota: ${label}` : "Escuchando…") : "Micrófono apagado"}
       </p>
       <button
         type="button"
         onClick={listening ? stop : start}
         className={cn(
-          "rounded-md px-4 py-2 text-sm font-medium text-white",
-          listening ? "bg-red-600 hover:bg-red-500" : "bg-blue-600 hover:bg-blue-500",
+          "rounded-md px-4 py-2 text-sm font-medium text-accent-fg",
+          listening ? "bg-danger hover:bg-danger-hover" : "bg-accent hover:bg-accent-hover",
         )}
       >
         {listening ? "Detener" : "Activar micrófono"}
       </button>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
     </section>
   );
 }

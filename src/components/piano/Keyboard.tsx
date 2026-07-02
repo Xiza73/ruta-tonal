@@ -21,7 +21,7 @@ export function Keyboard({ keys, active, onPress, onRelease }: KeyboardProps) {
   const whitesBefore = (midi: number) => whites.filter((w) => w.midi < midi).length;
 
   return (
-    <div className="relative inline-flex rounded-md bg-slate-800 p-2 shadow-lg">
+    <div className="relative inline-flex rounded-md bg-surface p-2 shadow-lg">
       {whites.map((k) => (
         <PianoKey
           key={k.midi}

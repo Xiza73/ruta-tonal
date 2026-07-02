@@ -27,9 +27,9 @@ export function PianoKey({ k, active, onPress, onRelease, style }: PianoKeyProps
       className={cn(
         "flex items-end justify-center pb-2 text-xs font-medium select-none",
         k.isSharp
-          ? "absolute top-0 z-10 h-24 w-6 -translate-x-1/2 rounded-b border border-slate-900 bg-slate-900 text-slate-300"
-          : "h-40 w-10 rounded-b border border-slate-300 bg-white text-slate-500",
-        active && (k.isSharp ? "bg-blue-600 text-white" : "bg-blue-200 text-blue-900"),
+          ? "absolute top-0 z-10 h-24 w-6 -translate-x-1/2 rounded-b border border-base bg-base text-fg-muted"
+          : "h-40 w-10 rounded-b border border-border bg-white text-fg-subtle",
+        active && "bg-accent text-accent-fg",
       )}
     >
       {k.label}

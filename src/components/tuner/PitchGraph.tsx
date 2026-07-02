@@ -9,16 +9,17 @@ const SMOOTH = 0.12; // suavizado del auto-scroll vertical
 const CENTER_BOUNDS = { low: 48, high: 72 }; // el centro se mueve entre C3 y C5
 const INITIAL_CENTER = 60; // C4
 
-// En canvas se usan strings de color (no clases Tailwind). Paleta slate/amber.
+// El canvas usa strings de color (no clases Tailwind). Estos valores REFLEJAN los
+// tokens de index.css (@theme). Si algún día hay theming, leerlos con getComputedStyle.
 const COLORS = {
-  bg: "#0b1120",
-  rowNatural: "#1e293b", // fila de tecla blanca
-  rowSharp: "#0e1626", // fila de tecla negra (más oscura → alterna como un teclado)
-  octaveLine: "#64748b", // línea de octava (en cada C) para orientarse
-  label: "#e2e8f0", // etiqueta de natural
-  labelDim: "#7c8aa0", // etiqueta de sostenido
-  block: "rgba(251, 146, 60, 0.55)", // bloques de nota (historial)
-  blockTip: "rgba(251, 191, 36, 0.95)", // nota actual (más viva)
+  bg: "#0b1120", // --color-base
+  rowNatural: "#131c30", // --color-surface (fila de tecla blanca)
+  rowSharp: "#0d1526", // entre base y surface (fila de tecla negra)
+  octaveLine: "#3a496b", // borde algo más vivo, para orientarse en cada C
+  label: "#e8ecf5", // --color-fg
+  labelDim: "#5b6a86", // --color-fg-subtle
+  block: "rgba(251, 191, 36, 0.55)", // --color-pitch (historial)
+  blockTip: "rgba(251, 191, 36, 0.95)", // --color-pitch (nota actual, más viva)
   trace: "#ffffff",
   traceGlow: "rgba(255, 255, 255, 0.55)",
 };

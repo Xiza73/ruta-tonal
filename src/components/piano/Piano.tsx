@@ -80,7 +80,7 @@ export function Piano({ profile = DEFAULT_PROFILE }: PianoProps) {
         onPress={press}
         onRelease={release}
       />
-      <p className="text-sm text-slate-400">
+      <p className="text-sm text-fg-muted">
         Tocá con el mouse o el teclado: A S D F G H J K (blancas) · W E T Y U (negras).
       </p>
     </section>
