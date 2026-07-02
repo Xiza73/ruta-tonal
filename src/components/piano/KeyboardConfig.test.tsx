@@ -18,10 +18,20 @@ test("cambiar a Latín pone notación solfege", () => {
   expect(useKeyboardStore.getState().notation).toBe("solfege");
 });
 
-test("cambiar las octavas actualiza el store", () => {
+test("elegir octavas en el dropdown actualiza el store", () => {
   render(<KeyboardConfig />);
-  fireEvent.click(screen.getByRole("button", { name: "3" }));
+  fireEvent.change(screen.getByLabelText("Cantidad de octavas"), {
+    target: { value: "3" },
+  });
   expect(useKeyboardStore.getState().octaves).toBe(3);
+});
+
+test("elegir la octava inicial actualiza el store", () => {
+  render(<KeyboardConfig />);
+  fireEvent.change(screen.getByLabelText("Octava inicial"), {
+    target: { value: "60" },
+  });
+  expect(useKeyboardStore.getState().startMidi).toBe(60);
 });
 
 test("elegir un sonido en el dropdown actualiza el store", () => {

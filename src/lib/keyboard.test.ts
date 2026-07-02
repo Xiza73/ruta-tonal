@@ -31,8 +31,8 @@ describe("keysForProfile", () => {
 
   test("asigna la tecla física a cada nota del rango", () => {
     const keys = keysForProfile(DEFAULT_PROFILE);
-    expect(keys[0].code).toBe("KeyA"); // C4
-    expect(keys.at(-1)!.code).toBe("KeyK"); // C5
+    expect(keys[0].code).toBe("KeyZ"); // C4 (offset 0)
+    expect(keys.at(-1)!.code).toBe("KeyQ"); // C5 (offset 12)
   });
 
   test("el mismo keyMap sirve en otra octava (offset relativo)", () => {
@@ -42,7 +42,7 @@ describe("keysForProfile", () => {
     };
     const keys = keysForProfile(profile);
     expect(keys[0].label).toBe("C3");
-    expect(keys[0].code).toBe("KeyA"); // misma tecla física, otra octava
+    expect(keys[0].code).toBe("KeyZ"); // misma tecla física, otra octava
   });
 
   test("respeta la notación del perfil", () => {
@@ -79,10 +79,10 @@ describe("buildProfile", () => {
 
 describe("midiForCode", () => {
   test("tecla mapeada → MIDI absoluto", () => {
-    expect(midiForCode(DEFAULT_PROFILE, "KeyA")).toBe(60); // C4
-    expect(midiForCode(DEFAULT_PROFILE, "KeyK")).toBe(72); // C5
+    expect(midiForCode(DEFAULT_PROFILE, "KeyZ")).toBe(60); // C4
+    expect(midiForCode(DEFAULT_PROFILE, "KeyQ")).toBe(72); // C5
   });
   test("tecla no mapeada → undefined", () => {
-    expect(midiForCode(DEFAULT_PROFILE, "KeyZ")).toBeUndefined();
+    expect(midiForCode(DEFAULT_PROFILE, "Escape")).toBeUndefined();
   });
 });

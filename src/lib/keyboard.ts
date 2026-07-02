@@ -59,23 +59,39 @@ export function midiForCode(profile: KeyboardProfile, code: string): number | un
 }
 
 /**
- * Mapeo default tipo GarageBand: fila base = blancas, fila de arriba = negras.
- * Una octava + el Do siguiente (offsets 0..12).
+ * Mapeo default tipo tracker (2 octavas):
+ * - Octava baja en la fila inferior (Z X C V B N M + S D G H J).
+ * - Octava alta en la fila superior (Q W E R T Y U + 2 3 5 6 7).
+ * Offsets 0..24. Más allá de 2 octavas no hay tecla física (se toca con mouse).
  */
 export const DEFAULT_KEYMAP: Record<string, number> = {
-  KeyA: 0, // C
-  KeyW: 1, // C#
-  KeyS: 2, // D
-  KeyE: 3, // D#
-  KeyD: 4, // E
-  KeyF: 5, // F
-  KeyT: 6, // F#
-  KeyG: 7, // G
-  KeyY: 8, // G#
-  KeyH: 9, // A
-  KeyU: 10, // A#
-  KeyJ: 11, // B
-  KeyK: 12, // C (octava siguiente)
+  // Octava baja
+  KeyZ: 0, // C
+  KeyS: 1, // C#
+  KeyX: 2, // D
+  KeyD: 3, // D#
+  KeyC: 4, // E
+  KeyV: 5, // F
+  KeyG: 6, // F#
+  KeyB: 7, // G
+  KeyH: 8, // G#
+  KeyN: 9, // A
+  KeyJ: 10, // A#
+  KeyM: 11, // B
+  // Octava alta
+  KeyQ: 12, // C
+  Digit2: 13, // C#
+  KeyW: 14, // D
+  Digit3: 15, // D#
+  KeyE: 16, // E
+  KeyR: 17, // F
+  Digit5: 18, // F#
+  KeyT: 19, // G
+  Digit6: 20, // G#
+  KeyY: 21, // A
+  Digit7: 22, // A#
+  KeyU: 23, // B
+  KeyI: 24, // C (fin de la 2da octava)
 };
 
 /** Perfil inicial: una octava desde C4, notación científica, sonido triangle. */
