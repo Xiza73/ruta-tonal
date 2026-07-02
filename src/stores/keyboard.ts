@@ -10,6 +10,7 @@ interface KeyboardState {
   soundType: OscillatorType;
   setNotation: (notation: Notation) => void;
   setOctaves: (octaves: number) => void;
+  setStartMidi: (startMidi: number) => void;
   setSoundType: (soundType: OscillatorType) => void;
 }
 
@@ -26,6 +27,7 @@ export const useKeyboardStore = create<KeyboardState>()(
       soundType: "triangle",
       setNotation: (notation) => set({ notation }),
       setOctaves: (octaves) => set({ octaves }),
+      setStartMidi: (startMidi) => set({ startMidi }),
       setSoundType: (soundType) => set({ soundType }),
     }),
     { name: "ruta-tonal-keyboard" },
