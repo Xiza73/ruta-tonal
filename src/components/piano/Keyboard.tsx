@@ -11,13 +11,24 @@ interface KeyboardProps {
   active: ReadonlySet<number>;
   onPress: (midi: number) => void;
   onRelease: (midi: number) => void;
+  /** Modo configuración: muestra la tecla asignada en cada nota. */
+  configMode?: boolean;
+  /** Nota seleccionada esperando asignación (en modo config). */
+  selectedMidi?: number | null;
 }
 
 /**
  * Layout del teclado: teclas fluidas (llenan el ancho) con un max-width que
  * depende de la cantidad de octavas. Negras absolutas, posicionadas en %.
  */
-export function Keyboard({ keys, active, onPress, onRelease }: KeyboardProps) {
+export function Keyboard({
+  keys,
+  active,
+  onPress,
+  onRelease,
+  configMode = false,
+  selectedMidi = null,
+}: KeyboardProps) {
   const whites = keys.filter((k) => !k.isSharp);
   const blacks = keys.filter((k) => k.isSharp);
   const totalWhites = whites.length;
@@ -34,6 +45,8 @@ export function Keyboard({ keys, active, onPress, onRelease }: KeyboardProps) {
           key={k.midi}
           k={k}
           active={active.has(k.midi)}
+          configMode={configMode}
+          selected={k.midi === selectedMidi}
           onPress={onPress}
           onRelease={onRelease}
         />
@@ -43,6 +56,8 @@ export function Keyboard({ keys, active, onPress, onRelease }: KeyboardProps) {
           key={k.midi}
           k={k}
           active={active.has(k.midi)}
+          configMode={configMode}
+          selected={k.midi === selectedMidi}
           onPress={onPress}
           onRelease={onRelease}
           style={{
