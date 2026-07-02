@@ -73,16 +73,11 @@ export function Piano({ profile = DEFAULT_PROFILE }: PianoProps) {
   }, [profile]);
 
   return (
-    <section className="flex flex-col items-center gap-4">
-      <Keyboard
-        keys={keysForProfile(profile)}
-        active={active}
-        onPress={press}
-        onRelease={release}
-      />
-      <p className="text-sm text-fg-muted">
-        Tocá con el mouse o el teclado: A S D F G H J K (blancas) · W E T Y U (negras).
-      </p>
-    </section>
+    <Keyboard
+      keys={keysForProfile(profile)}
+      active={active}
+      onPress={press}
+      onRelease={release}
+    />
   );
 }

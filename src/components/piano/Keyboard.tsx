@@ -1,8 +1,10 @@
 import type { KeyboardKey } from "../../lib/keyboard";
 import { PianoKey } from "./PianoKey";
 
-/** px — debe matchear el ancho de la tecla blanca (w-10 = 40px). */
-const WHITE_WIDTH = 40;
+/** Ancho máximo por tecla blanca (px). El piano crece con las octavas hasta este tope. */
+const MAX_WHITE_PX = 64;
+/** Ancho de la tecla negra como fracción del ancho de una blanca. */
+const BLACK_RATIO = 0.62;
 
 interface KeyboardProps {
   keys: KeyboardKey[];
@@ -12,16 +14,21 @@ interface KeyboardProps {
 }
 
 /**
- * Layout del teclado: blancas en fila, negras absolutas sobre el borde entre
- * blancas. Presentacional puro — recibe las teclas ya calculadas.
+ * Layout del teclado: teclas fluidas (llenan el ancho) con un max-width que
+ * depende de la cantidad de octavas. Negras absolutas, posicionadas en %.
  */
 export function Keyboard({ keys, active, onPress, onRelease }: KeyboardProps) {
   const whites = keys.filter((k) => !k.isSharp);
   const blacks = keys.filter((k) => k.isSharp);
+  const totalWhites = whites.length;
   const whitesBefore = (midi: number) => whites.filter((w) => w.midi < midi).length;
+  const blackWidthPct = (100 / totalWhites) * BLACK_RATIO;
 
   return (
-    <div className="relative inline-flex rounded-lg bg-base p-2 shadow-raised">
+    <div
+      className="relative mx-auto flex h-full w-full"
+      style={{ maxWidth: totalWhites * MAX_WHITE_PX }}
+    >
       {whites.map((k) => (
         <PianoKey
           key={k.midi}
@@ -38,8 +45,10 @@ export function Keyboard({ keys, active, onPress, onRelease }: KeyboardProps) {
           active={active.has(k.midi)}
           onPress={onPress}
           onRelease={onRelease}
-          // +8 = padding del contenedor (p-2); la negra se centra en el borde.
-          style={{ left: 8 + whitesBefore(k.midi) * WHITE_WIDTH }}
+          style={{
+            left: `${(whitesBefore(k.midi) / totalWhites) * 100}%`,
+            width: `${blackWidthPct}%`,
+          }}
         />
       ))}
     </div>

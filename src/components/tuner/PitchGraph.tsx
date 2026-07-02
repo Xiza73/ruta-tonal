@@ -1,42 +1,39 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef } from "react";
 import { midiToNote, type Notation } from "../../lib/notes";
 import { followCenter, midiToY, visibleRange } from "../../lib/pitch-graph";
 
-const HEIGHT = 360; // alto lógico (px CSS); el ancho es responsive
 const GUTTER = 44; // columna de etiquetas de nota a la izquierda
 const SPAN = 24; // semitonos visibles (2 octavas)
 const SMOOTH = 0.12; // suavizado del auto-scroll vertical
 const CENTER_BOUNDS = { low: 48, high: 72 }; // el centro se mueve entre C3 y C5
 const INITIAL_CENTER = 60; // C4
 
-// El canvas usa strings de color (no clases Tailwind). Estos valores REFLEJAN los
-// tokens de index.css (@theme). Si algún día hay theming, leerlos con getComputedStyle.
+// El canvas usa strings de color; estos valores REFLEJAN los tokens de index.css.
 const COLORS = {
-  bg: "#0b0f1c", // ~ink-950 / --color-base
-  rowNatural: "#12172a", // ~ink-900 / --color-surface (fila de tecla blanca)
-  rowSharp: "#0e1322", // entre base y surface (fila de tecla negra)
-  octaveLine: "#37425f", // ~ink-700, para orientarse en cada C
-  label: "#f4f6fb", // ~ink-50 / --color-fg
-  labelDim: "#7a869f", // ~ink-500 / --color-fg-subtle
-  block: "rgba(245, 181, 43, 0.55)", // --color-pitch (historial)
-  blockTip: "rgba(245, 181, 43, 0.95)", // --color-pitch (nota actual, más viva)
+  bg: "#0b0f1c",
+  rowNatural: "#12172a",
+  rowSharp: "#0e1322",
+  octaveLine: "#37425f",
+  label: "#f4f6fb",
+  labelDim: "#7a869f",
+  block: "rgba(245, 181, 43, 0.55)",
+  blockTip: "rgba(245, 181, 43, 0.95)",
   trace: "#ffffff",
   traceGlow: "rgba(255, 255, 255, 0.55)",
 };
 
 interface PitchGraphProps {
-  /** Historial de pitch continuo (MIDI o null), viejo→nuevo. Ref mutable: no re-renderiza. */
-  bufferRef: RefObject<(number | null)[]>;
+  /** Historial de pitch continuo (MIDI o null), viejo→nuevo. Mutado in-place. */
+  buffer: (number | null)[];
   capacity: number;
   notation: Notation;
 }
 
 /**
  * Gráfico de afinación en el tiempo (piano roll con auto-scroll vertical).
- * Imperativo: dibuja en su propio loop de rAF leyendo el buffer, desacoplado de React.
- * Renderiza a devicePixelRatio para que se vea nítido (no escalado/borroso).
+ * Ancho y alto responsive (llena su contenedor), a devicePixelRatio.
  */
-export function PitchGraph({ bufferRef, capacity, notation }: PitchGraphProps) {
+export function PitchGraph({ buffer, capacity, notation }: PitchGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const centerRef = useRef(INITIAL_CENTER);
 
@@ -45,12 +42,12 @@ export function PitchGraph({ bufferRef, capacity, notation }: PitchGraphProps) {
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return; // jsdom no implementa canvas 2d → no rompe
 
-    // Backing store a la densidad real de la pantalla → nitidez.
     let W = 0;
-    const H = HEIGHT;
+    let H = 0;
     const resize = () => {
       const dpr = window.devicePixelRatio || 1;
       W = canvas.clientWidth;
+      H = canvas.clientHeight;
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -61,21 +58,20 @@ export function PitchGraph({ bufferRef, capacity, notation }: PitchGraphProps) {
 
     let raf = 0;
     const draw = () => {
-      if (W === 0) {
-        raf = requestAnimationFrame(draw); // aún sin medir
+      if (W === 0 || H === 0) {
+        raf = requestAnimationFrame(draw);
         return;
       }
       const plotW = W - GUTTER;
       const rowH = H / SPAN;
       const stepX = plotW / (capacity - 1);
-      const buf = bufferRef.current ?? [];
 
       // auto-scroll: el centro sigue la muestra más nueva (o se queda quieto)
       let target = centerRef.current;
       let tipIndex = -1;
-      for (let i = buf.length - 1; i >= 0; i--) {
-        if (buf[i] != null) {
-          target = buf[i] as number;
+      for (let i = buffer.length - 1; i >= 0; i--) {
+        if (buffer[i] != null) {
+          target = buffer[i] as number;
           tipIndex = i;
           break;
         }
@@ -86,7 +82,6 @@ export function PitchGraph({ bufferRef, capacity, notation }: PitchGraphProps) {
       ctx.fillStyle = COLORS.bg;
       ctx.fillRect(0, 0, W, H);
 
-      // filas estilo teclado (blancas/negras) + etiqueta de TODAS las notas
       ctx.textBaseline = "middle";
       for (let m = Math.ceil(range.low) - 1; m <= Math.floor(range.high) + 1; m++) {
         const y = midiToY(m, range) * H;
@@ -106,13 +101,13 @@ export function PitchGraph({ bufferRef, capacity, notation }: PitchGraphProps) {
         }
 
         ctx.fillStyle = sharp ? COLORS.labelDim : COLORS.label;
-        ctx.font = sharp ? "9px sans-serif" : "11px sans-serif";
+        ctx.font = sharp ? "10px sans-serif" : "12px sans-serif";
         ctx.fillText(note.label, 6, y);
       }
 
       // bloques de nota (naranja): uno por muestra; el más nuevo, más vivo.
-      for (let i = 0; i < buf.length; i++) {
-        const midi = buf[i];
+      for (let i = 0; i < buffer.length; i++) {
+        const midi = buffer[i];
         if (midi == null) continue;
         const note = Math.round(midi);
         if (note < range.low || note > range.high) continue;
@@ -130,10 +125,10 @@ export function PitchGraph({ bufferRef, capacity, notation }: PitchGraphProps) {
       ctx.lineJoin = "round";
       ctx.beginPath();
       let drawing = false;
-      for (let i = 0; i < buf.length; i++) {
-        const midi = buf[i];
+      for (let i = 0; i < buffer.length; i++) {
+        const midi = buffer[i];
         if (midi == null || midi < range.low || midi > range.high) {
-          drawing = false; // hueco: silencio o fuera de la ventana
+          drawing = false;
           continue;
         }
         const x = GUTTER + i * stepX;
@@ -155,14 +150,7 @@ export function PitchGraph({ bufferRef, capacity, notation }: PitchGraphProps) {
       cancelAnimationFrame(raf);
       ro?.disconnect();
     };
-  }, [bufferRef, capacity, notation]);
+  }, [buffer, capacity, notation]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      className="w-full max-w-2xl rounded-md"
-      style={{ height: HEIGHT }}
-    />
-  );
+  return <canvas ref={canvasRef} aria-hidden="true" className="h-full w-full" />;
 }

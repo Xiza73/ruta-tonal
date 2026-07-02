@@ -12,9 +12,9 @@ const reset = () =>
 
 beforeEach(reset);
 
-test("cambiar la notación actualiza el store", () => {
+test("cambiar a Latín pone notación solfege", () => {
   render(<KeyboardConfig />);
-  fireEvent.click(screen.getByRole("button", { name: "Do, Re, Mi" }));
+  fireEvent.click(screen.getByRole("button", { name: "Latín" }));
   expect(useKeyboardStore.getState().notation).toBe("solfege");
 });
 
@@ -24,16 +24,22 @@ test("cambiar las octavas actualiza el store", () => {
   expect(useKeyboardStore.getState().octaves).toBe(3);
 });
 
-test("cambiar el sonido actualiza el store", () => {
+test("elegir un sonido en el dropdown actualiza el store", () => {
   render(<KeyboardConfig />);
-  fireEvent.click(screen.getByRole("button", { name: "Cuadrada" }));
+  fireEvent.change(screen.getByLabelText("Tipo de sonido"), {
+    target: { value: "square" },
+  });
   expect(useKeyboardStore.getState().soundType).toBe("square");
 });
 
-test("la opción activa queda marcada (aria-pressed)", () => {
+test("la notación activa queda marcada (aria-pressed)", () => {
   render(<KeyboardConfig />);
-  expect(screen.getByRole("button", { name: "C, D, E" })).toHaveAttribute(
+  expect(screen.getByRole("button", { name: "Anglosajón" })).toHaveAttribute(
     "aria-pressed",
     "true",
+  );
+  expect(screen.getByRole("button", { name: "Latín" })).toHaveAttribute(
+    "aria-pressed",
+    "false",
   );
 });

@@ -46,7 +46,7 @@ function Toggle({
   );
 }
 
-/** Panel de configuración del teclado: notación, tamaño y tipo de sonido. */
+/** Controles del teclado: notación, tamaño y tipo de sonido. Barra compacta. */
 export function KeyboardConfig() {
   const notation = useKeyboardStore((s) => s.notation);
   const octaves = useKeyboardStore((s) => s.octaves);
@@ -56,13 +56,13 @@ export function KeyboardConfig() {
   const setSoundType = useKeyboardStore((s) => s.setSoundType);
 
   return (
-    <div className="flex flex-wrap items-start justify-center gap-x-8 gap-y-4">
+    <div className="flex flex-wrap items-start justify-center gap-x-8 gap-y-3">
       <Field label="Notación">
-        <Toggle active={notation === "scientific"} onClick={() => setNotation("scientific")}>
-          C, D, E
-        </Toggle>
         <Toggle active={notation === "solfege"} onClick={() => setNotation("solfege")}>
-          Do, Re, Mi
+          Latín
+        </Toggle>
+        <Toggle active={notation === "scientific"} onClick={() => setNotation("scientific")}>
+          Anglosajón
         </Toggle>
       </Field>
 
@@ -75,11 +75,21 @@ export function KeyboardConfig() {
       </Field>
 
       <Field label="Sonido">
-        {SOUNDS.map((s) => (
-          <Toggle key={s.value} active={soundType === s.value} onClick={() => setSoundType(s.value)}>
-            {s.label}
-          </Toggle>
-        ))}
+        <select
+          value={soundType}
+          onChange={(e) => setSoundType(e.target.value as OscillatorType)}
+          aria-label="Tipo de sonido"
+          className={cn(
+            "rounded-md bg-elevated px-3 py-1 text-sm font-medium text-fg",
+            "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
+          )}
+        >
+          {SOUNDS.map((s) => (
+            <option key={s.value} value={s.value}>
+              {s.label}
+            </option>
+          ))}
+        </select>
       </Field>
     </div>
   );
