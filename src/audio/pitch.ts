@@ -12,6 +12,7 @@
 
 import { PitchDetector as Pitchy } from "pitchy";
 import { frequencyToNote, type DetectedNote, type Notation } from "../lib/notes";
+import { getAudioContext } from "./context";
 
 export interface PitchGateOptions {
   notation?: Notation;
@@ -52,22 +53,32 @@ export interface PitchDetectorOptions extends PitchGateOptions {
 export interface MicPitchDetector {
   /** Pide permiso de micrófono y arranca el loop. Llamar tras un gesto del usuario. */
   start(): Promise<void>;
-  /** Detiene el loop, libera el micrófono y cierra el contexto. */
+  /** Detiene el loop y libera el micrófono. El AudioContext es compartido: no se cierra. */
   stop(): void;
 }
 
 const FFT_SIZE = 2048;
 
 export function createPitchDetector(options: PitchDetectorOptions): MicPitchDetector {
-  let ctx: AudioContext | null = null;
   let stream: MediaStream | null = null;
+  let source: MediaStreamAudioSourceNode | null = null;
   let rafId: number | null = null;
 
   async function start() {
-    if (ctx) return; // ya corriendo
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    ctx = new AudioContext();
-    const source = ctx.createMediaStreamSource(stream);
+    if (stream) return; // ya corriendo
+    // Señal cruda: desactivamos el procesado del browser. Para un afinador
+    // queremos el audio más fiel posible; AEC/NS/AGC distorsionan (sobre todo
+    // los agudos) y arruinan la precisión del pitch.
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      },
+    });
+    const ctx = getAudioContext(); // compartido con el synth
+    await ctx.resume();
+    source = ctx.createMediaStreamSource(stream);
     const analyser = ctx.createAnalyser();
     analyser.fftSize = FFT_SIZE;
     source.connect(analyser); // NO a destination → evita el loop de feedback
@@ -76,7 +87,6 @@ export function createPitchDetector(options: PitchDetectorOptions): MicPitchDete
     const input = new Float32Array(detector.inputLength);
 
     const tick = () => {
-      if (!ctx) return;
       analyser.getFloatTimeDomainData(input);
       const [pitch, clarity] = detector.findPitch(input, ctx.sampleRate);
       options.onReading(readingToNote(pitch, clarity, options));
@@ -88,10 +98,10 @@ export function createPitchDetector(options: PitchDetectorOptions): MicPitchDete
   function stop() {
     if (rafId !== null) cancelAnimationFrame(rafId);
     rafId = null;
+    source?.disconnect();
+    source = null;
     stream?.getTracks().forEach((t) => t.stop());
     stream = null;
-    void ctx?.close();
-    ctx = null;
   }
 
   return { start, stop };

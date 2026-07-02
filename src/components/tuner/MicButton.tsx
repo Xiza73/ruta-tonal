@@ -35,6 +35,8 @@ export function MicButton() {
         <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
         <line x1="12" y1="19" x2="12" y2="23" />
         <line x1="8" y1="23" x2="16" y2="23" />
+        {/* Slash de "apagado" cuando no está escuchando. */}
+        {!listening && <line x1="3" y1="3" x2="21" y2="21" />}
       </svg>
     </button>
   );
