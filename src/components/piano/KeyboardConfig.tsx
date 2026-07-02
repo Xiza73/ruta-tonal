@@ -13,7 +13,7 @@ const SOUNDS: { value: OscillatorType; label: string }[] = [
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div role="group" aria-label={label} className="flex flex-col items-center gap-1">
-      <span className="text-xs font-medium text-slate-400 uppercase">{label}</span>
+      <span className="text-xs font-medium text-fg-muted uppercase">{label}</span>
       <div className="flex gap-1">{children}</div>
     </div>
   );
@@ -35,7 +35,9 @@ function Toggle({
       onClick={onClick}
       className={cn(
         "rounded-md px-3 py-1 text-sm font-medium transition-colors",
-        active ? "bg-blue-600 text-white" : "bg-slate-700 text-slate-300 hover:bg-slate-600",
+        active
+          ? "bg-accent text-accent-fg"
+          : "bg-elevated text-fg-muted hover:bg-border hover:text-fg",
       )}
     >
       {children}
@@ -53,7 +55,7 @@ export function KeyboardConfig() {
   const setSoundType = useKeyboardStore((s) => s.setSoundType);
 
   return (
-    <div className="flex flex-wrap items-start justify-center gap-6 rounded-lg bg-slate-800 p-4">
+    <div className="flex flex-wrap items-start justify-center gap-6 rounded-lg bg-surface p-4">
       <Field label="Notación">
         <Toggle active={notation === "scientific"} onClick={() => setNotation("scientific")}>
           C, D, E
