@@ -130,3 +130,40 @@ export function buildProfile(settings: ProfileSettings): KeyboardProfile {
 export function keyLabel(code: string): string {
   return code.replace(/^Key/, "").replace(/^Digit/, "");
 }
+
+/** Snapshot de la config del teclado (lo que compone un perfil). */
+export interface ConfigSnapshot {
+  notation: Notation;
+  octaves: number;
+  startMidi: number;
+  soundType: OscillatorType;
+  customKeyMap: Record<string, number> | null;
+}
+
+/** Un perfil guardado: un snapshot con id y nombre. */
+export interface Profile extends ConfigSnapshot {
+  id: string;
+  name: string;
+}
+
+/** Igualdad de dos keymaps (null = default). */
+export function keyMapEqual(
+  a: Record<string, number> | null,
+  b: Record<string, number> | null,
+): boolean {
+  if (a === null || b === null) return a === b;
+  const keys = Object.keys(a);
+  if (keys.length !== Object.keys(b).length) return false;
+  return keys.every((k) => a[k] === b[k]);
+}
+
+/** ¿La config actual coincide con la de un perfil guardado? */
+export function configMatchesProfile(c: ConfigSnapshot, p: Profile): boolean {
+  return (
+    c.notation === p.notation &&
+    c.octaves === p.octaves &&
+    c.startMidi === p.startMidi &&
+    c.soundType === p.soundType &&
+    keyMapEqual(c.customKeyMap, p.customKeyMap)
+  );
+}
