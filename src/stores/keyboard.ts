@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { buildProfile, DEFAULT_KEYMAP, type KeyboardProfile } from "../lib/keyboard";
+import { buildProfile, DEFAULT_KEYMAP, type KeyboardProfile, type Profile } from "../lib/keyboard";
 import type { Notation } from "../lib/notes";
 
 interface KeyboardState {
@@ -12,6 +12,8 @@ interface KeyboardState {
   customKeyMap: Record<string, number> | null;
   /** Modo configuración de teclas: el piano no suena, se reasignan teclas. */
   configMode: boolean;
+  /** Perfiles guardados (config completa con nombre). Persistidos. */
+  profiles: Profile[];
   setNotation: (notation: Notation) => void;
   setOctaves: (octaves: number) => void;
   setStartMidi: (startMidi: number) => void;
@@ -21,6 +23,12 @@ interface KeyboardState {
   bindKey: (code: string, offset: number) => void;
   /** Vuelve al mapeo default. */
   resetKeyMap: () => void;
+  /** Guarda la config actual como un perfil nombrado. */
+  saveProfile: (name: string) => void;
+  /** Carga un perfil guardado en la config actual. */
+  loadProfile: (id: string) => void;
+  /** Borra un perfil guardado. */
+  deleteProfile: (id: string) => void;
 }
 
 /**
@@ -36,6 +44,7 @@ export const useKeyboardStore = create<KeyboardState>()(
       soundType: "triangle",
       customKeyMap: null,
       configMode: false,
+      profiles: [],
       setNotation: (notation) => set({ notation }),
       setOctaves: (octaves) => set({ octaves }),
       setStartMidi: (startMidi) => set({ startMidi }),
@@ -54,6 +63,35 @@ export const useKeyboardStore = create<KeyboardState>()(
           return { customKeyMap: next };
         }),
       resetKeyMap: () => set({ customKeyMap: null }),
+      saveProfile: (name) =>
+        set((s) => ({
+          profiles: [
+            ...s.profiles,
+            {
+              id: crypto.randomUUID(),
+              name,
+              notation: s.notation,
+              octaves: s.octaves,
+              startMidi: s.startMidi,
+              soundType: s.soundType,
+              customKeyMap: s.customKeyMap,
+            },
+          ],
+        })),
+      loadProfile: (id) =>
+        set((s) => {
+          const p = s.profiles.find((x) => x.id === id);
+          if (!p) return {};
+          return {
+            notation: p.notation,
+            octaves: p.octaves,
+            startMidi: p.startMidi,
+            soundType: p.soundType,
+            customKeyMap: p.customKeyMap,
+          };
+        }),
+      deleteProfile: (id) =>
+        set((s) => ({ profiles: s.profiles.filter((x) => x.id !== id) })),
     }),
     {
       name: "ruta-tonal-keyboard",
@@ -63,6 +101,7 @@ export const useKeyboardStore = create<KeyboardState>()(
         startMidi: s.startMidi,
         soundType: s.soundType,
         customKeyMap: s.customKeyMap,
+        profiles: s.profiles,
       }),
     },
   ),

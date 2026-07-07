@@ -1,11 +1,14 @@
 import {
   buildProfile,
+  configMatchesProfile,
   DEFAULT_PROFILE,
   keyLabel,
   keysForProfile,
   midiForCode,
   octaveRange,
+  type ConfigSnapshot,
   type KeyboardProfile,
+  type Profile,
 } from "./keyboard";
 
 describe("octaveRange", () => {
@@ -82,6 +85,31 @@ describe("keyLabel", () => {
   test("prettifica el code de la tecla", () => {
     expect(keyLabel("KeyZ")).toBe("Z");
     expect(keyLabel("Digit2")).toBe("2");
+  });
+});
+
+describe("configMatchesProfile", () => {
+  const snapshot: ConfigSnapshot = {
+    notation: "scientific",
+    octaves: 2,
+    startMidi: 48,
+    soundType: "triangle",
+    customKeyMap: null,
+  };
+  const profile: Profile = { id: "1", name: "P", ...snapshot };
+
+  test("coincide con la misma config", () => {
+    expect(configMatchesProfile(snapshot, profile)).toBe(true);
+  });
+
+  test("no coincide si difiere un campo", () => {
+    expect(configMatchesProfile({ ...snapshot, octaves: 3 }, profile)).toBe(false);
+  });
+
+  test("compara el keymap custom", () => {
+    const p2: Profile = { ...profile, customKeyMap: { KeyZ: 0 } };
+    expect(configMatchesProfile({ ...snapshot, customKeyMap: { KeyZ: 0 } }, p2)).toBe(true);
+    expect(configMatchesProfile({ ...snapshot, customKeyMap: { KeyZ: 1 } }, p2)).toBe(false);
   });
 });
 

@@ -1,6 +1,7 @@
 import { Piano } from "./components/piano/Piano";
 import { KeyboardConfig } from "./components/piano/KeyboardConfig";
 import { ConfigModeButton } from "./components/piano/ConfigModeButton";
+import { ProfileControls } from "./components/piano/ProfileControls";
 import { MicButton } from "./components/tuner/MicButton";
 import { PitchGraph } from "./components/tuner/PitchGraph";
 import { pitchBuffer, TUNER_CAPACITY, useTunerStore } from "./stores/tuner";
@@ -31,6 +32,7 @@ export default function App() {
       <section className="flex min-h-0 flex-[1] flex-col gap-3 px-3 pb-3">
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
           <MicButton />
+          <ProfileControls />
           <KeyboardConfig />
           <ConfigModeButton />
         </div>
