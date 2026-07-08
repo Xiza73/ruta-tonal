@@ -45,6 +45,19 @@ export function Piano({ profile = DEFAULT_PROFILE }: PianoProps) {
   }
 
   useEffect(() => () => engineRef.current?.dispose(), []);
+
+  // Precarga: al primer gesto (en cualquier lado), crea el motor para que las
+  // muestras del piano empiecen a cargar antes de que toques una tecla.
+  useEffect(() => {
+    const preload = () => ensureEngine(useKeyboardStore.getState().soundType);
+    window.addEventListener("pointerdown", preload, { once: true });
+    window.addEventListener("keydown", preload, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", preload);
+      window.removeEventListener("keydown", preload);
+    };
+  }, []);
+
   useEffect(() => {
     // Limpia la selección al salir del modo config (sync con estado externo).
     // eslint-disable-next-line react-hooks/set-state-in-effect
