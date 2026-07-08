@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { createSynth, type Synth, type Voice } from "../../audio/synth";
+import { createSampler } from "../../audio/sampler";
 import {
   DEFAULT_PROFILE,
   keysForProfile,
   midiForCode,
   type KeyboardProfile,
+  type SoundType,
 } from "../../lib/keyboard";
 import { useKeyboardStore } from "../../stores/keyboard";
 import { Keyboard } from "./Keyboard";
@@ -21,20 +23,28 @@ interface PianoProps {
 export function Piano({ profile = DEFAULT_PROFILE }: PianoProps) {
   const configMode = useKeyboardStore((s) => s.configMode);
   const bindKey = useKeyboardStore((s) => s.bindKey);
-  const synthRef = useRef<Synth | null>(null);
+  const engineRef = useRef<Synth | null>(null);
+  const engineTypeRef = useRef<SoundType | null>(null);
   const voicesRef = useRef(new Map<number, Voice>());
   const [active, setActive] = useState<ReadonlySet<number>>(new Set());
   const [selectedOffset, setSelectedOffset] = useState<number | null>(null);
 
-  function getSynth() {
-    synthRef.current ??= createSynth({ type: profile.soundType });
-    return synthRef.current;
+  // Elige el motor según el sonido: samples (piano real) u oscilador.
+  function ensureEngine(soundType: SoundType): Synth {
+    if (engineRef.current && engineTypeRef.current === soundType) return engineRef.current;
+    // oscilador → oscilador: solo cambiar el tipo, sin recrear
+    if (engineRef.current && soundType !== "piano" && engineTypeRef.current !== "piano") {
+      engineRef.current.setType(soundType);
+      engineTypeRef.current = soundType;
+      return engineRef.current;
+    }
+    engineRef.current?.dispose();
+    engineRef.current = soundType === "piano" ? createSampler() : createSynth({ type: soundType });
+    engineTypeRef.current = soundType;
+    return engineRef.current;
   }
 
-  useEffect(() => () => synthRef.current?.dispose(), []);
-  useEffect(() => {
-    synthRef.current?.setType(profile.soundType);
-  }, [profile.soundType]);
+  useEffect(() => () => engineRef.current?.dispose(), []);
   useEffect(() => {
     // Limpia la selección al salir del modo config (sync con estado externo).
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -43,9 +53,9 @@ export function Piano({ profile = DEFAULT_PROFILE }: PianoProps) {
 
   function press(midi: number) {
     if (voicesRef.current.has(midi)) return;
-    const synth = getSynth();
-    void synth.resume();
-    voicesRef.current.set(midi, synth.play(midi));
+    const engine = ensureEngine(profile.soundType);
+    void engine.resume();
+    voicesRef.current.set(midi, engine.play(midi));
     setActive((prev) => new Set(prev).add(midi));
   }
 

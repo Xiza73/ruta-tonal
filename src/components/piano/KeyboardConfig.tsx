@@ -1,11 +1,13 @@
 import type { ReactNode } from "react";
 import { useKeyboardStore } from "../../stores/keyboard";
 import { midiToNote } from "../../lib/notes";
+import type { SoundType } from "../../lib/keyboard";
 import { cn } from "../../lib/cn";
 
 const OCTAVE_OPTIONS = [1, 2, 3, 4];
 const START_OPTIONS = [36, 48, 60]; // C2, C3, C4
-const SOUNDS: { value: OscillatorType; label: string }[] = [
+const SOUNDS: { value: SoundType; label: string }[] = [
+  { value: "piano", label: "Piano (real)" },
   { value: "triangle", label: "Triangular" },
   { value: "sine", label: "Senoidal" },
   { value: "square", label: "Cuadrada" },
@@ -108,7 +110,7 @@ export function KeyboardConfig() {
       <Field label="Sonido">
         <select
           value={soundType}
-          onChange={(e) => setSoundType(e.target.value as OscillatorType)}
+          onChange={(e) => setSoundType(e.target.value as SoundType)}
           aria-label="Tipo de sonido"
           className={selectClass}
         >
