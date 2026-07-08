@@ -38,9 +38,10 @@ export function PianoKey({
       }}
       className={cn(
         "flex flex-col items-center justify-end gap-1 pb-2 text-[10px] font-medium select-none",
+        // Colores FIJOS (primitivas ink): un piano es blanco y negro en ambos temas.
         k.isSharp
-          ? "absolute top-0 z-10 h-[62%] -translate-x-1/2 rounded-b border border-base bg-base text-fg-muted"
-          : "h-full flex-1 rounded-b border border-border bg-white text-fg-subtle",
+          ? "absolute top-0 z-10 h-[62%] -translate-x-1/2 rounded-b border border-ink-950 bg-ink-900 text-ink-300"
+          : "h-full flex-1 rounded-b border border-ink-300 bg-white text-ink-600",
         active && "bg-accent text-accent-fg",
         selected && "z-20 ring-2 ring-accent ring-inset",
       )}
