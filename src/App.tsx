@@ -5,6 +5,7 @@ import { ConfigModeButton } from "./components/piano/ConfigModeButton";
 import { ProfileControls } from "./components/piano/ProfileControls";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { MicButton } from "./components/tuner/MicButton";
+import { NoteReadout } from "./components/tuner/NoteReadout";
 import { PitchGraph } from "./components/tuner/PitchGraph";
 import { pitchBuffer, TUNER_CAPACITY, useTunerStore } from "./stores/tuner";
 import { useKeyboardProfile, useKeyboardStore } from "./stores/keyboard";
@@ -25,10 +26,13 @@ export default function App() {
   }, [theme]);
 
   return (
-    <main className="flex h-screen flex-col overflow-hidden bg-base">
-      {/* Superior (~2/3): gráfico de afinación. */}
-      <section className="min-h-0 flex-[2] p-3">
-        <div className="mx-auto h-full w-full max-w-[1400px] overflow-hidden rounded-lg">
+    <main className="flex h-screen flex-col gap-4 overflow-hidden bg-base p-4">
+      {/* Superior: readout de la nota + gráfico de afinación (crece). */}
+      <section className="flex min-h-0 flex-1 flex-col gap-2">
+        <div className="flex h-14 shrink-0 items-baseline justify-center">
+          <NoteReadout />
+        </div>
+        <div className="mx-auto min-h-0 w-full max-w-[1400px] flex-1 overflow-hidden rounded-lg">
           <PitchGraph
             buffer={pitchBuffer}
             capacity={TUNER_CAPACITY}
@@ -41,9 +45,9 @@ export default function App() {
         </p>
       </section>
 
-      {/* Inferior (~1/3): barra de controles + teclado. */}
-      <section className="flex min-h-0 flex-[1] flex-col gap-3 px-3 pb-3">
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+      {/* Inferior: barra de controles + teclado (alto fijo, compacto). */}
+      <section className="flex shrink-0 flex-col gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-5">
           <MicButton />
           <ProfileControls />
           <KeyboardConfig />
@@ -63,7 +67,7 @@ export default function App() {
             </button>
           </div>
         )}
-        <div className="mx-auto min-h-0 w-full max-w-[1400px] flex-1">
+        <div className="mx-auto h-[180px] w-full max-w-[1400px]">
           <Piano profile={profile} />
         </div>
       </section>

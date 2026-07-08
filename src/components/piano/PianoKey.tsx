@@ -7,15 +7,12 @@ interface PianoKeyProps {
   active: boolean;
   onPress: (midi: number) => void;
   onRelease: (midi: number) => void;
-  /** Modo configuración: muestra la tecla física asignada. */
   configMode?: boolean;
-  /** Nota seleccionada esperando asignación. */
   selected?: boolean;
-  /** Posición/ancho de las teclas negras (dinámico → va por style). */
   style?: CSSProperties;
 }
 
-/** Una tecla. Presentacional puro: sin audio, solo eventos hacia el container. */
+/** Una tecla. Estilo neón: blancas off-white, negras navy, presionada = cyan glow. */
 export function PianoKey({
   k,
   active,
@@ -37,12 +34,11 @@ export function PianoKey({
         if (!configMode && e.buttons) onRelease(k.midi);
       }}
       className={cn(
-        "flex flex-col items-center justify-end gap-1 pb-2 text-[10px] font-medium select-none",
-        // Colores FIJOS (primitivas ink): un piano es blanco y negro en ambos temas.
+        "flex flex-col items-center justify-end gap-1 pb-2 text-[10px] font-medium select-none transition-[background,box-shadow] duration-75",
         k.isSharp
-          ? "absolute top-0 z-10 h-[62%] -translate-x-1/2 rounded-b border border-ink-950 bg-ink-900 text-ink-300"
-          : "h-full flex-1 rounded-b border border-ink-300 bg-white text-ink-600",
-        active && "bg-accent text-accent-fg",
+          ? "absolute top-0 z-10 h-[62%] -translate-x-1/2 rounded-b border border-white/10 bg-[#10141e] text-fg-muted shadow-[2px_5px_10px_rgba(0,0,0,0.6)]"
+          : "h-full flex-1 rounded-b border border-black/10 bg-white text-ink-950 shadow-[0_4px_8px_rgba(0,0,0,0.45)]",
+        active && "bg-accent text-accent-fg shadow-[0_0_16px_var(--accent)]",
         selected && "z-20 ring-2 ring-accent ring-inset",
       )}
     >

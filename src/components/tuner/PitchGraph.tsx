@@ -1,38 +1,36 @@
 import { useEffect, useRef } from "react";
 import { midiToNote, type Notation } from "../../lib/notes";
-import { followCenter, midiToY, visibleRange } from "../../lib/pitch-graph";
+import { centsColor, followCenter, midiToY, visibleRange } from "../../lib/pitch-graph";
 
-const GUTTER = 44; // columna de etiquetas de nota a la izquierda
+const GUTTER = 40; // columna de etiquetas de nota a la izquierda
+const RIGHT_GUTTER = 40; // etiquetas también a la derecha (donde nacen las notas)
 const SPAN = 24; // semitonos visibles (2 octavas)
 const SMOOTH = 0.12; // suavizado del auto-scroll vertical
 const CENTER_BOUNDS = { low: 48, high: 72 }; // el centro se mueve entre C3 y C5
 const INITIAL_CENTER = 60; // C4
 
-// El gráfico es una "pantalla" oscura en AMBOS temas (como un osciloscopio): la
-// traza y las notas resaltan mejor. En claro cambia un poco: tinte índigo que
-// acompaña el pastel del tema, sin lavarse.
+// El gráfico es una "pantalla" oscura navy en ambos temas (como un osciloscopio).
 const PALETTES = {
   dark: {
-    bg: "#0b0f1c",
-    rowNatural: "#12172a",
-    rowSharp: "#0e1322",
-    octaveLine: "#37425f",
-    label: "#f4f6fb",
-    labelDim: "#7a869f",
-    pitch: "#f5b52b",
+    bg: "#070a12",
+    rowNatural: "#0d1220",
+    rowSharp: "#0a0e18",
+    octaveLine: "#16324a",
+    label: "#dde6f5",
+    labelDim: "#6b7fa3",
     trace: "#ffffff",
   },
   light: {
-    bg: "#141130",
-    rowNatural: "#1d1943",
-    rowSharp: "#181439",
-    octaveLine: "#4a4480",
-    label: "#f3f1fc",
-    labelDim: "#8f8ab5",
-    pitch: "#f7ad3a",
+    bg: "#16273f", // azul medio (más claro que el navy, acompaña el pastel)
+    rowNatural: "#1e3352",
+    rowSharp: "#192b47",
+    octaveLine: "#2c4d72",
+    label: "#dce8f9",
+    labelDim: "#8092b4",
     trace: "#ffffff",
   },
 } as const;
+
 
 interface PitchGraphProps {
   /** Historial de pitch continuo (MIDI o null), viejo→nuevo. Mutado in-place. */
@@ -50,6 +48,7 @@ interface PitchGraphProps {
 export function PitchGraph({ buffer, capacity, notation, theme }: PitchGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const centerRef = useRef(INITIAL_CENTER);
+  const hadDataRef = useRef(false); // ¿había datos el frame anterior?
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -78,7 +77,7 @@ export function PitchGraph({ buffer, capacity, notation, theme }: PitchGraphProp
         raf = requestAnimationFrame(draw);
         return;
       }
-      const plotW = W - GUTTER;
+      const plotW = W - GUTTER - RIGHT_GUTTER;
       const rowH = H / SPAN;
       const stepX = plotW / (capacity - 1);
 
@@ -91,7 +90,15 @@ export function PitchGraph({ buffer, capacity, notation, theme }: PitchGraphProp
           break;
         }
       }
-      centerRef.current = followCenter(centerRef.current, target, SMOOTH, CENTER_BOUNDS);
+      if (tipIndex === -1) {
+        hadDataRef.current = false; // buffer vacío (mic apagado / silencio total)
+      } else {
+        // Al reaparecer datos tras estar vacío, SNAP el centro (smooth=1) para
+        // no quedar scrolleando lento desde la nota vieja al reactivar el mic.
+        const smooth = hadDataRef.current ? SMOOTH : 1;
+        centerRef.current = followCenter(centerRef.current, target, smooth, CENTER_BOUNDS);
+        hadDataRef.current = true;
+      }
       const range = visibleRange(centerRef.current, SPAN);
 
       ctx.fillStyle = COLORS.bg;
@@ -111,24 +118,28 @@ export function PitchGraph({ buffer, capacity, notation, theme }: PitchGraphProp
           ctx.strokeStyle = COLORS.octaveLine;
           ctx.beginPath();
           ctx.moveTo(GUTTER, y + rowH / 2);
-          ctx.lineTo(W, y + rowH / 2);
+          ctx.lineTo(W - RIGHT_GUTTER, y + rowH / 2);
           ctx.stroke();
         }
 
         ctx.fillStyle = sharp ? COLORS.labelDim : COLORS.label;
-        ctx.font = sharp ? "10px sans-serif" : "12px sans-serif";
-        ctx.fillText(note.label, 6, y);
+        ctx.font = sharp ? "10px Quicksand, sans-serif" : "600 12px Quicksand, sans-serif";
+        ctx.textAlign = "center"; // padding parejo a ambos lados en cada columna
+        ctx.fillText(note.label, GUTTER / 2, y);
+        ctx.fillText(note.label, W - RIGHT_GUTTER / 2, y);
       }
+      ctx.textAlign = "left";
 
-      // bloques de nota: uno por muestra; el más nuevo, más opaco.
-      ctx.fillStyle = COLORS.pitch;
+      // bloques coloreados por afinación; el más nuevo, más opaco.
       for (let i = 0; i < buffer.length; i++) {
         const midi = buffer[i];
         if (midi == null) continue;
         const note = Math.round(midi);
         if (note < range.low || note > range.high) continue;
+        const cents = (midi - note) * 100;
         const y = midiToY(note, range) * H;
-        ctx.globalAlpha = i === tipIndex ? 0.95 : 0.55;
+        ctx.fillStyle = centsColor(cents);
+        ctx.globalAlpha = i === tipIndex ? 0.95 : 0.5;
         ctx.fillRect(GUTTER + i * stepX, y - rowH / 2, stepX + 1, rowH);
       }
       ctx.globalAlpha = 1;

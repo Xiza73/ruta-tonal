@@ -13,7 +13,7 @@ export function ConfigModeButton() {
       aria-pressed={configMode}
       onClick={() => setConfigMode(!configMode)}
       className={cn(
-        "flex size-10 items-center justify-center rounded-lg transition-colors",
+        "flex size-9 items-center justify-center rounded-md transition-colors",
         "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
         configMode
           ? "bg-accent text-accent-fg"

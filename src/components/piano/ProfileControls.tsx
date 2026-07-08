@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X } from "lucide-react";
+import { Bookmark, X } from "lucide-react";
 import { useKeyboardStore } from "../../stores/keyboard";
 import { configMatchesProfile } from "../../lib/keyboard";
 import { Button } from "@/components/ui/button";
@@ -76,40 +76,36 @@ export function ProfileControls() {
   const matching = profiles.find((p) => configMatchesProfile(snapshot, p));
 
   return (
-    <div role="group" aria-label="Perfil" className="flex flex-col items-center gap-1">
-      <span className="text-xs font-medium text-fg-muted uppercase">Perfil</span>
-      <div className="flex items-center gap-1">
-        <Select value={matching?.id ?? ""} onValueChange={loadProfile}>
-          <SelectTrigger aria-label="Perfil guardado" className="min-w-32">
-            <SelectValue placeholder="Personalizado" />
-          </SelectTrigger>
-          <SelectContent>
-            {profiles.map((p) => (
-              <SelectItem key={p.id} value={p.id}>
-                {p.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+    <div role="group" aria-label="Perfil" className="flex items-center gap-1">
+      <Select value={matching?.id ?? ""} onValueChange={loadProfile}>
+        <SelectTrigger aria-label="Perfil guardado" className="min-w-40">
+          <Bookmark className="opacity-70" />
+          <SelectValue placeholder="Personalizado" />
+        </SelectTrigger>
+        <SelectContent>
+          {profiles.map((p) => (
+            <SelectItem key={p.id} value={p.id}>
+              {p.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-        {!configMode && !matching && (
-          <Button size="sm" onClick={() => setDialogOpen(true)}>
-            Guardar
-          </Button>
-        )}
+      {!configMode && !matching && (
+        <Button onClick={() => setDialogOpen(true)}>Guardar</Button>
+      )}
 
-        {matching && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 text-fg-muted hover:bg-destructive hover:text-destructive-foreground"
-            aria-label={`Eliminar perfil ${matching.name}`}
-            onClick={() => deleteProfile(matching.id)}
-          >
-            <X />
-          </Button>
-        )}
-      </div>
+      {matching && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-fg-muted hover:bg-destructive hover:text-destructive-foreground"
+          aria-label={`Eliminar perfil ${matching.name}`}
+          onClick={() => deleteProfile(matching.id)}
+        >
+          <X />
+        </Button>
+      )}
 
       {dialogOpen && (
         <SaveProfileDialog
