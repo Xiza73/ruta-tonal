@@ -1,12 +1,15 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 import { useKeyboardStore } from "../../stores/keyboard";
 import { configMatchesProfile } from "../../lib/keyboard";
-import { cn } from "../../lib/cn";
-
-const controlClass = cn(
-  "rounded-md px-3 py-1 text-sm font-medium",
-  "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
-);
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 function SaveProfileDialog({
   onClose,
@@ -28,9 +31,9 @@ function SaveProfileDialog({
         role="dialog"
         aria-label="Guardar configuración"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-sm rounded-xl bg-surface p-5 shadow-raised"
+        className="w-full max-w-sm rounded-xl border border-border bg-card p-5 shadow-raised"
       >
-        <h2 className="text-base font-semibold text-fg">Guardar configuración</h2>
+        <h2 className="text-base font-semibold text-foreground">Guardar configuración</h2>
         <input
           autoFocus
           value={name}
@@ -40,24 +43,15 @@ function SaveProfileDialog({
           }}
           placeholder="Nombre del perfil"
           aria-label="Nombre del perfil"
-          className="mt-3 w-full rounded-md bg-elevated px-3 py-2 text-sm text-fg placeholder:text-fg-subtle focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+          className="mt-3 w-full rounded-md border border-input bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         />
         <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className={cn(controlClass, "bg-elevated text-fg-muted hover:bg-border hover:text-fg")}
-          >
+          <Button variant="secondary" size="sm" onClick={onClose}>
             Cancelar
-          </button>
-          <button
-            type="button"
-            disabled={!trimmed}
-            onClick={() => onSave(trimmed)}
-            className={cn(controlClass, "bg-accent text-accent-fg disabled:opacity-40")}
-          >
+          </Button>
+          <Button size="sm" disabled={!trimmed} onClick={() => onSave(trimmed)}>
             Guardar
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -85,41 +79,35 @@ export function ProfileControls() {
     <div role="group" aria-label="Perfil" className="flex flex-col items-center gap-1">
       <span className="text-xs font-medium text-fg-muted uppercase">Perfil</span>
       <div className="flex items-center gap-1">
-        <select
-          value={matching?.id ?? ""}
-          onChange={(e) => {
-            if (e.target.value) loadProfile(e.target.value);
-          }}
-          aria-label="Perfil guardado"
-          className={cn(controlClass, "bg-elevated text-fg")}
-        >
-          <option value="">Personalizado</option>
-          {profiles.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </select>
+        <Select value={matching?.id ?? ""} onValueChange={loadProfile}>
+          <SelectTrigger aria-label="Perfil guardado" className="min-w-32">
+            <SelectValue placeholder="Personalizado" />
+          </SelectTrigger>
+          <SelectContent>
+            {profiles.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
         {!configMode && !matching && (
-          <button
-            type="button"
-            onClick={() => setDialogOpen(true)}
-            className={cn(controlClass, "bg-accent text-accent-fg")}
-          >
+          <Button size="sm" onClick={() => setDialogOpen(true)}>
             Guardar
-          </button>
+          </Button>
         )}
 
         {matching && (
-          <button
-            type="button"
-            onClick={() => deleteProfile(matching.id)}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8 text-fg-muted hover:bg-destructive hover:text-destructive-foreground"
             aria-label={`Eliminar perfil ${matching.name}`}
-            className={cn(controlClass, "bg-elevated text-fg-muted hover:bg-danger hover:text-accent-fg")}
+            onClick={() => deleteProfile(matching.id)}
           >
-            ✕
-          </button>
+            <X />
+          </Button>
         )}
       </div>
 
