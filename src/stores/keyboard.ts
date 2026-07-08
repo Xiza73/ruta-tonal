@@ -1,13 +1,19 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { buildProfile, DEFAULT_KEYMAP, type KeyboardProfile, type Profile } from "../lib/keyboard";
+import {
+  buildProfile,
+  DEFAULT_KEYMAP,
+  type KeyboardProfile,
+  type Profile,
+  type SoundType,
+} from "../lib/keyboard";
 import type { Notation } from "../lib/notes";
 
 interface KeyboardState {
   notation: Notation;
   octaves: number;
   startMidi: number;
-  soundType: OscillatorType;
+  soundType: SoundType;
   /** Mapeo custom (tecla → offset); null = usar DEFAULT_KEYMAP. Persistido. */
   customKeyMap: Record<string, number> | null;
   /** Modo configuración de teclas: el piano no suena, se reasignan teclas. */
@@ -17,7 +23,7 @@ interface KeyboardState {
   setNotation: (notation: Notation) => void;
   setOctaves: (octaves: number) => void;
   setStartMidi: (startMidi: number) => void;
-  setSoundType: (soundType: OscillatorType) => void;
+  setSoundType: (soundType: SoundType) => void;
   setConfigMode: (configMode: boolean) => void;
   /** Asigna una tecla física a un offset (una tecla por nota). */
   bindKey: (code: string, offset: number) => void;
@@ -41,7 +47,7 @@ export const useKeyboardStore = create<KeyboardState>()(
       notation: "scientific",
       octaves: 2,
       startMidi: 48, // C3
-      soundType: "triangle",
+      soundType: "piano",
       customKeyMap: null,
       configMode: false,
       profiles: [],

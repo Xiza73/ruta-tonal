@@ -10,13 +10,16 @@
 
 import { midiToNote, type Note, type Notation } from "./notes";
 
+/** Tipo de sonido del teclado: oscilador (Web Audio) o piano por muestras. */
+export type SoundType = OscillatorType | "piano";
+
 export interface KeyboardProfile {
   name: string;
   /** Rango inclusivo en MIDI. */
   range: { low: number; high: number };
   notation: Notation;
   /** Tipo de sonido (OscillatorType para el synth del MVP). */
-  soundType: OscillatorType;
+  soundType: SoundType;
   /** KeyboardEvent.code → offset de semitonos desde range.low. */
   keyMap: Record<string, number>;
 }
@@ -110,7 +113,7 @@ export interface ProfileSettings {
   startMidi: number;
   /** Cantidad de octavas. */
   octaves: number;
-  soundType: OscillatorType;
+  soundType: SoundType;
   /** Mapeo de teclas; por defecto DEFAULT_KEYMAP. */
   keyMap?: Record<string, number>;
 }
@@ -136,7 +139,7 @@ export interface ConfigSnapshot {
   notation: Notation;
   octaves: number;
   startMidi: number;
-  soundType: OscillatorType;
+  soundType: SoundType;
   customKeyMap: Record<string, number> | null;
 }
 
