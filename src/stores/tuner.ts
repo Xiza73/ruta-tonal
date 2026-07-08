@@ -16,18 +16,11 @@ export const pitchBuffer: (number | null)[] = new Array(TUNER_CAPACITY).fill(nul
 let recent: number[] = [];
 let detector: MicPitchDetector | null = null;
 
-export interface NoteReading {
-  label: string;
-  cents: number;
-}
-
 interface TunerState {
   listening: boolean;
   error: string | null;
-  /** Nota actual (para a11y / texto); cambia poco, no por frame. */
+  /** Nota actual (para a11y / texto); cambia solo al cambiar de nota. */
   label: string | null;
-  /** Lectura en vivo (nota + cents) para el readout; se actualiza por frame. */
-  current: NoteReading | null;
   start: () => Promise<void>;
   stop: () => void;
 }
@@ -36,7 +29,6 @@ export const useTunerStore = create<TunerState>((set, get) => ({
   listening: false,
   error: null,
   label: null,
-  current: null,
 
   start: async () => {
     set({ error: null });
@@ -56,17 +48,9 @@ export const useTunerStore = create<TunerState>((set, get) => ({
           pitchBuffer.push(smoothed);
           if (pitchBuffer.length > TUNER_CAPACITY) pitchBuffer.shift();
 
-          // Readout en vivo: nota + cents del valor suavizado (por frame).
-          let current: NoteReading | null = null;
-          if (smoothed !== null) {
-            const midi = Math.round(smoothed);
-            const cents = Math.round((smoothed - midi) * 100);
-            current = { label: midiToNote(midi).label, cents };
-          }
-          // Un solo set por frame: `current` cada frame, `label` (a11y) al cambiar.
-          const patch: Partial<TunerState> = { current };
-          if (current?.label !== get().label) patch.label = current?.label ?? null;
-          set(patch);
+          // label (a11y) solo cuando cambia la nota → sin renders por frame.
+          const label = smoothed === null ? null : midiToNote(Math.round(smoothed)).label;
+          if (label !== get().label) set({ label });
         },
       });
     }
@@ -82,6 +66,6 @@ export const useTunerStore = create<TunerState>((set, get) => ({
     detector?.stop();
     pitchBuffer.fill(null); // limpia sin cambiar el largo (playhead sigue a la derecha)
     recent = [];
-    set({ listening: false, label: null, current: null });
+    set({ listening: false, label: null });
   },
 }));
