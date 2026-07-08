@@ -2,7 +2,14 @@ import type { ReactNode } from "react";
 import { useKeyboardStore } from "../../stores/keyboard";
 import { midiToNote } from "../../lib/notes";
 import type { SoundType } from "../../lib/keyboard";
-import { cn } from "../../lib/cn";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const OCTAVE_OPTIONS = [1, 2, 3, 4];
 const START_OPTIONS = [36, 48, 60]; // C2, C3, C4
@@ -14,44 +21,12 @@ const SOUNDS: { value: SoundType; label: string }[] = [
   { value: "sawtooth", label: "Sierra" },
 ];
 
-const selectClass = cn(
-  "rounded-md bg-elevated px-3 py-1 text-sm font-medium text-fg",
-  "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
-);
-
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div role="group" aria-label={label} className="flex flex-col items-center gap-1">
       <span className="text-xs font-medium text-fg-muted uppercase">{label}</span>
       <div className="flex gap-1">{children}</div>
     </div>
-  );
-}
-
-function Toggle({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      aria-pressed={active}
-      onClick={onClick}
-      className={cn(
-        "rounded-md px-3 py-1 text-sm font-medium transition-colors",
-        "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
-        active
-          ? "bg-accent text-accent-fg"
-          : "bg-elevated text-fg-muted hover:bg-border hover:text-fg",
-      )}
-    >
-      {children}
-    </button>
   );
 }
 
@@ -69,57 +44,67 @@ export function KeyboardConfig() {
   return (
     <div className="flex flex-wrap items-start justify-center gap-x-6 gap-y-3">
       <Field label="Notación">
-        <Toggle active={notation === "solfege"} onClick={() => setNotation("solfege")}>
+        <Button
+          size="sm"
+          variant={notation === "solfege" ? "default" : "secondary"}
+          aria-pressed={notation === "solfege"}
+          onClick={() => setNotation("solfege")}
+        >
           Latín
-        </Toggle>
-        <Toggle active={notation === "scientific"} onClick={() => setNotation("scientific")}>
+        </Button>
+        <Button
+          size="sm"
+          variant={notation === "scientific" ? "default" : "secondary"}
+          aria-pressed={notation === "scientific"}
+          onClick={() => setNotation("scientific")}
+        >
           Anglosajón
-        </Toggle>
+        </Button>
       </Field>
 
       <Field label="Octavas">
-        <select
-          value={octaves}
-          onChange={(e) => setOctaves(Number(e.target.value))}
-          aria-label="Cantidad de octavas"
-          className={selectClass}
-        >
-          {OCTAVE_OPTIONS.map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-        </select>
+        <Select value={String(octaves)} onValueChange={(v) => setOctaves(Number(v))}>
+          <SelectTrigger aria-label="Cantidad de octavas">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {OCTAVE_OPTIONS.map((o) => (
+              <SelectItem key={o} value={String(o)}>
+                {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
 
       <Field label="Inicio">
-        <select
-          value={startMidi}
-          onChange={(e) => setStartMidi(Number(e.target.value))}
-          aria-label="Octava inicial"
-          className={selectClass}
-        >
-          {START_OPTIONS.map((m) => (
-            <option key={m} value={m}>
-              {midiToNote(m, notation).label}
-            </option>
-          ))}
-        </select>
+        <Select value={String(startMidi)} onValueChange={(v) => setStartMidi(Number(v))}>
+          <SelectTrigger aria-label="Octava inicial">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {START_OPTIONS.map((m) => (
+              <SelectItem key={m} value={String(m)}>
+                {midiToNote(m, notation).label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
 
       <Field label="Sonido">
-        <select
-          value={soundType}
-          onChange={(e) => setSoundType(e.target.value as SoundType)}
-          aria-label="Tipo de sonido"
-          className={selectClass}
-        >
-          {SOUNDS.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+        <Select value={soundType} onValueChange={(v) => setSoundType(v as SoundType)}>
+          <SelectTrigger aria-label="Tipo de sonido">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SOUNDS.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </Field>
     </div>
   );
