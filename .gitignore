@@ -17,9 +17,6 @@ coverage/
 playwright-report/
 test-results/
 
-# Referencia de diseño (no se sube; se borra al terminar)
-ui-helper/
-
 # Logs y temporales
 *.log
 .DS_Store
