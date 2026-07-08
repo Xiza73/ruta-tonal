@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { AudioWaveform } from "lucide-react";
 import { useKeyboardStore } from "../../stores/keyboard";
 import { midiToNote } from "../../lib/notes";
 import type { SoundType } from "../../lib/keyboard";
@@ -21,16 +21,10 @@ const SOUNDS: { value: SoundType; label: string }[] = [
   { value: "sawtooth", label: "Sierra" },
 ];
 
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div role="group" aria-label={label} className="flex flex-col items-center gap-1">
-      <span className="text-xs font-medium text-fg-muted uppercase">{label}</span>
-      <div className="flex gap-1">{children}</div>
-    </div>
-  );
-}
-
-/** Controles del teclado: notación, tamaño, octava inicial y tipo de sonido. */
+/**
+ * Controles del teclado sin labels: cada control se explica solo
+ * (notación por valor, "2 oct", "desde C3", ícono de onda en el sonido).
+ */
 export function KeyboardConfig() {
   const notation = useKeyboardStore((s) => s.notation);
   const octaves = useKeyboardStore((s) => s.octaves);
@@ -42,10 +36,10 @@ export function KeyboardConfig() {
   const setSoundType = useKeyboardStore((s) => s.setSoundType);
 
   return (
-    <div className="flex flex-wrap items-start justify-center gap-x-6 gap-y-3">
-      <Field label="Notación">
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      {/* Notación (los valores se explican solos) */}
+      <div className="flex gap-1">
         <Button
-          size="sm"
           variant={notation === "solfege" ? "default" : "secondary"}
           aria-pressed={notation === "solfege"}
           onClick={() => setNotation("solfege")}
@@ -53,59 +47,53 @@ export function KeyboardConfig() {
           Latín
         </Button>
         <Button
-          size="sm"
           variant={notation === "scientific" ? "default" : "secondary"}
           aria-pressed={notation === "scientific"}
           onClick={() => setNotation("scientific")}
         >
           Anglosajón
         </Button>
-      </Field>
+      </div>
 
-      <Field label="Octavas">
-        <Select value={String(octaves)} onValueChange={(v) => setOctaves(Number(v))}>
-          <SelectTrigger aria-label="Cantidad de octavas">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {OCTAVE_OPTIONS.map((o) => (
-              <SelectItem key={o} value={String(o)}>
-                {o}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
+      <Select value={String(octaves)} onValueChange={(v) => setOctaves(Number(v))}>
+        <SelectTrigger aria-label="Cantidad de octavas">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {OCTAVE_OPTIONS.map((o) => (
+            <SelectItem key={o} value={String(o)}>
+              {o} oct
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <Field label="Inicio">
-        <Select value={String(startMidi)} onValueChange={(v) => setStartMidi(Number(v))}>
-          <SelectTrigger aria-label="Octava inicial">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {START_OPTIONS.map((m) => (
-              <SelectItem key={m} value={String(m)}>
-                {midiToNote(m, notation).label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
+      <Select value={String(startMidi)} onValueChange={(v) => setStartMidi(Number(v))}>
+        <SelectTrigger aria-label="Octava inicial">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {START_OPTIONS.map((m) => (
+            <SelectItem key={m} value={String(m)}>
+              desde {midiToNote(m, notation).label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
 
-      <Field label="Sonido">
-        <Select value={soundType} onValueChange={(v) => setSoundType(v as SoundType)}>
-          <SelectTrigger aria-label="Tipo de sonido">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {SOUNDS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </Field>
+      <Select value={soundType} onValueChange={(v) => setSoundType(v as SoundType)}>
+        <SelectTrigger aria-label="Tipo de sonido">
+          <AudioWaveform className="opacity-70" />
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {SOUNDS.map((s) => (
+            <SelectItem key={s.value} value={s.value}>
+              {s.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

@@ -14,7 +14,7 @@ export function MicButton() {
       aria-pressed={listening}
       onClick={listening ? stop : start}
       className={cn(
-        "flex size-10 items-center justify-center rounded-lg transition-colors",
+        "flex size-9 items-center justify-center rounded-md transition-colors",
         "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",
         listening
           ? "bg-danger text-accent-fg hover:bg-danger-hover"

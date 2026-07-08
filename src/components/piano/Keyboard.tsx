@@ -2,7 +2,7 @@ import type { KeyboardKey } from "../../lib/keyboard";
 import { PianoKey } from "./PianoKey";
 
 /** Ancho máximo por tecla blanca (px). El piano crece con las octavas hasta este tope. */
-const MAX_WHITE_PX = 64;
+const MAX_WHITE_PX = 78;
 /** Ancho de la tecla negra como fracción del ancho de una blanca. */
 const BLACK_RATIO = 0.62;
 

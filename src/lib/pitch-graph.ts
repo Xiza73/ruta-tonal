@@ -62,3 +62,9 @@ export function followCenter(
   const next = prev + (target - prev) * smooth;
   return Math.min(bounds.high, Math.max(bounds.low, next));
 }
+
+/** Color de la nota según afinación: verde (afinado), cyan (cerca), ámbar (off). */
+export function centsColor(cents: number): string {
+  const a = Math.abs(cents);
+  return a < 8 ? "#00ff88" : a < 22 ? "#00d4ff" : "#ffa028";
+}
