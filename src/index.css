@@ -120,33 +120,35 @@
  * cada tono. Se activa con la clase `.light` en <html>.
  */
 .light {
-  --base: var(--color-ink-50);
-  --surface: oklch(100% 0 0);
-  --elevated: var(--color-ink-100);
-  --border: var(--color-ink-200);
-  --fg: var(--color-ink-950);
-  --fg-muted: var(--color-ink-600);
-  --fg-subtle: var(--color-ink-500);
+  /* Pastel índigo: el fondo tiene color para que el teclado BLANCO resalte
+     (blanco sobre blanco no separa nada). */
+  --base: oklch(95% 0.035 280); /* periwinkle claro */
+  --surface: oklch(98.5% 0.014 280);
+  --elevated: oklch(96.5% 0.025 280);
+  --border: oklch(87% 0.035 280);
+  --fg: oklch(30% 0.05 280);
+  --fg-muted: oklch(52% 0.045 280);
+  --fg-subtle: oklch(62% 0.04 280);
   --accent: var(--color-brand-500);
   --accent-hover: var(--color-brand-600);
   --danger: oklch(58% 0.22 25);
   --danger-hover: oklch(52% 0.22 25);
   --success: oklch(62% 0.16 162);
-  --pitch: oklch(70% 0.17 75);
+  --pitch: oklch(68% 0.17 70);
 
   /* shadcn */
-  --background: var(--color-ink-50);
-  --foreground: var(--color-ink-950);
-  --card: oklch(100% 0 0);
-  --card-foreground: var(--color-ink-950);
-  --popover: oklch(100% 0 0);
-  --popover-foreground: var(--color-ink-950);
+  --background: oklch(95% 0.035 280);
+  --foreground: oklch(30% 0.05 280);
+  --card: oklch(98.5% 0.014 280);
+  --card-foreground: oklch(30% 0.05 280);
+  --popover: oklch(98.5% 0.014 280);
+  --popover-foreground: oklch(30% 0.05 280);
   --primary: var(--color-brand-500);
   --primary-foreground: oklch(100% 0 0);
-  --secondary: var(--color-ink-100);
-  --secondary-foreground: var(--color-ink-950);
-  --muted: var(--color-ink-100);
-  --muted-foreground: var(--color-ink-600);
+  --secondary: oklch(96.5% 0.025 280);
+  --secondary-foreground: oklch(30% 0.05 280);
+  --muted: oklch(96.5% 0.025 280);
+  --muted-foreground: oklch(52% 0.045 280);
   --destructive: oklch(58% 0.22 25);
-  --input: var(--color-ink-200);
+  --input: oklch(87% 0.035 280);
 }

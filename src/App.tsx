@@ -29,7 +29,12 @@ export default function App() {
       {/* Superior (~2/3): gráfico de afinación. */}
       <section className="min-h-0 flex-[2] p-3">
         <div className="mx-auto h-full w-full max-w-[1400px] overflow-hidden rounded-lg">
-          <PitchGraph buffer={pitchBuffer} capacity={TUNER_CAPACITY} notation={notation} />
+          <PitchGraph
+            buffer={pitchBuffer}
+            capacity={TUNER_CAPACITY}
+            notation={notation}
+            theme={theme}
+          />
         </div>
         <p aria-live="polite" className="sr-only">
           {listening ? (label ? `Nota ${label}` : "Escuchando") : "Micrófono apagado"}

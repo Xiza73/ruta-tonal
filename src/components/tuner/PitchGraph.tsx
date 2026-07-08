@@ -8,32 +8,46 @@ const SMOOTH = 0.12; // suavizado del auto-scroll vertical
 const CENTER_BOUNDS = { low: 48, high: 72 }; // el centro se mueve entre C3 y C5
 const INITIAL_CENTER = 60; // C4
 
-// El canvas usa strings de color; estos valores REFLEJAN los tokens de index.css.
-const COLORS = {
-  bg: "#0b0f1c",
-  rowNatural: "#12172a",
-  rowSharp: "#0e1322",
-  octaveLine: "#37425f",
-  label: "#f4f6fb",
-  labelDim: "#7a869f",
-  block: "rgba(245, 181, 43, 0.55)",
-  blockTip: "rgba(245, 181, 43, 0.95)",
-  trace: "#ffffff",
-  traceGlow: "rgba(255, 255, 255, 0.55)",
-};
+// El gráfico es una "pantalla" oscura en AMBOS temas (como un osciloscopio): la
+// traza y las notas resaltan mejor. En claro cambia un poco: tinte índigo que
+// acompaña el pastel del tema, sin lavarse.
+const PALETTES = {
+  dark: {
+    bg: "#0b0f1c",
+    rowNatural: "#12172a",
+    rowSharp: "#0e1322",
+    octaveLine: "#37425f",
+    label: "#f4f6fb",
+    labelDim: "#7a869f",
+    pitch: "#f5b52b",
+    trace: "#ffffff",
+  },
+  light: {
+    bg: "#141130",
+    rowNatural: "#1d1943",
+    rowSharp: "#181439",
+    octaveLine: "#4a4480",
+    label: "#f3f1fc",
+    labelDim: "#8f8ab5",
+    pitch: "#f7ad3a",
+    trace: "#ffffff",
+  },
+} as const;
 
 interface PitchGraphProps {
   /** Historial de pitch continuo (MIDI o null), viejo→nuevo. Mutado in-place. */
   buffer: (number | null)[];
   capacity: number;
   notation: Notation;
+  /** Tema activo: elige la paleta del gráfico. */
+  theme: "dark" | "light";
 }
 
 /**
  * Gráfico de afinación en el tiempo (piano roll con auto-scroll vertical).
- * Ancho y alto responsive (llena su contenedor), a devicePixelRatio.
+ * Ancho y alto responsive, a devicePixelRatio. Pantalla oscura en ambos temas.
  */
-export function PitchGraph({ buffer, capacity, notation }: PitchGraphProps) {
+export function PitchGraph({ buffer, capacity, notation, theme }: PitchGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const centerRef = useRef(INITIAL_CENTER);
 
@@ -41,6 +55,8 @@ export function PitchGraph({ buffer, capacity, notation }: PitchGraphProps) {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return; // jsdom no implementa canvas 2d → no rompe
+
+    const COLORS = PALETTES[theme];
 
     let W = 0;
     let H = 0;
@@ -66,7 +82,6 @@ export function PitchGraph({ buffer, capacity, notation }: PitchGraphProps) {
       const rowH = H / SPAN;
       const stepX = plotW / (capacity - 1);
 
-      // auto-scroll: el centro sigue la muestra más nueva (o se queda quieto)
       let target = centerRef.current;
       let tipIndex = -1;
       for (let i = buffer.length - 1; i >= 0; i--) {
@@ -105,20 +120,22 @@ export function PitchGraph({ buffer, capacity, notation }: PitchGraphProps) {
         ctx.fillText(note.label, 6, y);
       }
 
-      // bloques de nota (naranja): uno por muestra; el más nuevo, más vivo.
+      // bloques de nota: uno por muestra; el más nuevo, más opaco.
+      ctx.fillStyle = COLORS.pitch;
       for (let i = 0; i < buffer.length; i++) {
         const midi = buffer[i];
         if (midi == null) continue;
         const note = Math.round(midi);
         if (note < range.low || note > range.high) continue;
         const y = midiToY(note, range) * H;
-        ctx.fillStyle = i === tipIndex ? COLORS.blockTip : COLORS.block;
+        ctx.globalAlpha = i === tipIndex ? 0.95 : 0.55;
         ctx.fillRect(GUTTER + i * stepX, y - rowH / 2, stepX + 1, rowH);
       }
+      ctx.globalAlpha = 1;
 
-      // traza continua (blanca) con glow, encima
+      // traza continua con glow, encima
       ctx.save();
-      ctx.shadowColor = COLORS.traceGlow;
+      ctx.shadowColor = "rgba(255, 255, 255, 0.55)";
       ctx.shadowBlur = 6;
       ctx.strokeStyle = COLORS.trace;
       ctx.lineWidth = 2.5;
@@ -150,7 +167,7 @@ export function PitchGraph({ buffer, capacity, notation }: PitchGraphProps) {
       cancelAnimationFrame(raf);
       ro?.disconnect();
     };
-  }, [buffer, capacity, notation]);
+  }, [buffer, capacity, notation, theme]);
 
   return <canvas ref={canvasRef} aria-hidden="true" className="h-full w-full" />;
 }
