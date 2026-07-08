@@ -5,7 +5,6 @@ import { ConfigModeButton } from "./components/piano/ConfigModeButton";
 import { ProfileControls } from "./components/piano/ProfileControls";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { MicButton } from "./components/tuner/MicButton";
-import { NoteReadout } from "./components/tuner/NoteReadout";
 import { PitchGraph } from "./components/tuner/PitchGraph";
 import { pitchBuffer, TUNER_CAPACITY, useTunerStore } from "./stores/tuner";
 import { useKeyboardProfile, useKeyboardStore } from "./stores/keyboard";
@@ -27,11 +26,8 @@ export default function App() {
 
   return (
     <main className="flex h-screen flex-col gap-4 overflow-hidden bg-base p-4">
-      {/* Superior: readout de la nota + gráfico de afinación (crece). */}
+      {/* Superior: gráfico de afinación en el tiempo (crece). */}
       <section className="flex min-h-0 flex-1 flex-col gap-2">
-        <div className="flex h-14 shrink-0 items-baseline justify-center">
-          <NoteReadout />
-        </div>
         <div className="mx-auto min-h-0 w-full max-w-[1400px] flex-1 overflow-hidden rounded-lg">
           <PitchGraph
             buffer={pitchBuffer}
