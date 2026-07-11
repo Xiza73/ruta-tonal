@@ -51,6 +51,11 @@
   --danger-hover: #ff6178;
   --success: #00ff88; /* nota afinada */
   --pitch: #00d4ff;
+
+  /* Tecla presionada: wash en blancas, teal en negras, label teal profundo */
+  --key-active: color-mix(in srgb, var(--accent) 55%, #ffffff);
+  --key-active-sharp: color-mix(in srgb, var(--accent) 42%, #0f1420);
+  --key-active-fg: color-mix(in srgb, var(--accent) 62%, #04171d);
 }
 
 /* Tema CLARO — pastel azul (el teclado blanco resalta y hay color, no blanco) */
@@ -73,6 +78,10 @@
   --danger-hover: #b93646;
   --success: #2a9d6a;
   --pitch: #1488c4;
+
+  --key-active: color-mix(in srgb, var(--accent) 26%, #ffffff);
+  --key-active-sharp: color-mix(in srgb, var(--accent) 42%, #0f1420);
+  --key-active-fg: color-mix(in srgb, var(--accent) 70%, #06202c);
 }
 
 /* 3) Exposición como utilidades de Tailwind */
@@ -95,6 +104,9 @@
   --color-danger-hover: var(--danger-hover);
   --color-success: var(--success);
   --color-pitch: var(--pitch);
+  --color-key-active: var(--key-active);
+  --color-key-active-sharp: var(--key-active-sharp);
+  --color-key-active-fg: var(--key-active-fg);
 
   /* shadcn/ui */
   --color-background: var(--base);
