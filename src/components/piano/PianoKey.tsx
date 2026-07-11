@@ -37,8 +37,9 @@ export function PianoKey({
         "flex flex-col items-center justify-end gap-1 pb-2 text-[10px] font-medium select-none transition-[background,box-shadow] duration-75",
         k.isSharp
           ? "absolute top-0 z-10 h-[62%] -translate-x-1/2 rounded-b border border-white/10 bg-[#10141e] text-fg-muted shadow-[2px_5px_10px_rgba(0,0,0,0.6)]"
-          : "h-full flex-1 rounded-b border border-black/10 bg-white text-ink-950 shadow-[0_4px_8px_rgba(0,0,0,0.45)]",
-        active && "bg-accent text-accent-fg shadow-[0_0_16px_var(--accent)]",
+          : "mx-[2px] h-full flex-1 rounded-b border border-black/10 bg-white text-ink-950 shadow-[0_4px_8px_rgba(0,0,0,0.45)]",
+        active && !k.isSharp && "bg-key-active text-key-active-fg",
+        active && k.isSharp && "bg-key-active-sharp text-ink-50",
         selected && "z-20 ring-2 ring-accent ring-inset",
       )}
     >
