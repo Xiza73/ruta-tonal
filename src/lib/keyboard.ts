@@ -10,13 +10,16 @@
 
 import { midiToNote, type Note, type Notation } from "./notes";
 
+/** Tipo de sonido del teclado: oscilador (Web Audio) o piano por muestras. */
+export type SoundType = OscillatorType | "piano";
+
 export interface KeyboardProfile {
   name: string;
   /** Rango inclusivo en MIDI. */
   range: { low: number; high: number };
   notation: Notation;
   /** Tipo de sonido (OscillatorType para el synth del MVP). */
-  soundType: OscillatorType;
+  soundType: SoundType;
   /** KeyboardEvent.code → offset de semitonos desde range.low. */
   keyMap: Record<string, number>;
 }
@@ -59,23 +62,39 @@ export function midiForCode(profile: KeyboardProfile, code: string): number | un
 }
 
 /**
- * Mapeo default tipo GarageBand: fila base = blancas, fila de arriba = negras.
- * Una octava + el Do siguiente (offsets 0..12).
+ * Mapeo default tipo tracker (2 octavas):
+ * - Octava baja en la fila inferior (Z X C V B N M + S D G H J).
+ * - Octava alta en la fila superior (Q W E R T Y U + 2 3 5 6 7).
+ * Offsets 0..24. Más allá de 2 octavas no hay tecla física (se toca con mouse).
  */
 export const DEFAULT_KEYMAP: Record<string, number> = {
-  KeyA: 0, // C
-  KeyW: 1, // C#
-  KeyS: 2, // D
-  KeyE: 3, // D#
-  KeyD: 4, // E
-  KeyF: 5, // F
-  KeyT: 6, // F#
-  KeyG: 7, // G
-  KeyY: 8, // G#
-  KeyH: 9, // A
-  KeyU: 10, // A#
-  KeyJ: 11, // B
-  KeyK: 12, // C (octava siguiente)
+  // Octava baja
+  KeyZ: 0, // C
+  KeyS: 1, // C#
+  KeyX: 2, // D
+  KeyD: 3, // D#
+  KeyC: 4, // E
+  KeyV: 5, // F
+  KeyG: 6, // F#
+  KeyB: 7, // G
+  KeyH: 8, // G#
+  KeyN: 9, // A
+  KeyJ: 10, // A#
+  KeyM: 11, // B
+  // Octava alta
+  KeyQ: 12, // C
+  Digit2: 13, // C#
+  KeyW: 14, // D
+  Digit3: 15, // D#
+  KeyE: 16, // E
+  KeyR: 17, // F
+  Digit5: 18, // F#
+  KeyT: 19, // G
+  Digit6: 20, // G#
+  KeyY: 21, // A
+  Digit7: 22, // A#
+  KeyU: 23, // B
+  KeyI: 24, // C (fin de la 2da octava)
 };
 
 /** Perfil inicial: una octava desde C4, notación científica, sonido triangle. */
@@ -86,3 +105,68 @@ export const DEFAULT_PROFILE: KeyboardProfile = {
   soundType: "triangle",
   keyMap: DEFAULT_KEYMAP,
 };
+
+/** Ajustes configurables del teclado (lo que el usuario toca en el panel). */
+export interface ProfileSettings {
+  notation: Notation;
+  /** Nota MIDI base (C de la octava más grave). */
+  startMidi: number;
+  /** Cantidad de octavas. */
+  octaves: number;
+  soundType: SoundType;
+  /** Mapeo de teclas; por defecto DEFAULT_KEYMAP. */
+  keyMap?: Record<string, number>;
+}
+
+/** Construye un KeyboardProfile a partir de los ajustes. */
+export function buildProfile(settings: ProfileSettings): KeyboardProfile {
+  return {
+    name: "Custom",
+    range: octaveRange(settings.startMidi, settings.octaves),
+    notation: settings.notation,
+    soundType: settings.soundType,
+    keyMap: settings.keyMap ?? DEFAULT_KEYMAP,
+  };
+}
+
+/** Etiqueta corta de un KeyboardEvent.code: "KeyZ" → "Z", "Digit2" → "2". */
+export function keyLabel(code: string): string {
+  return code.replace(/^Key/, "").replace(/^Digit/, "");
+}
+
+/** Snapshot de la config del teclado (lo que compone un perfil). */
+export interface ConfigSnapshot {
+  notation: Notation;
+  octaves: number;
+  startMidi: number;
+  soundType: SoundType;
+  customKeyMap: Record<string, number> | null;
+}
+
+/** Un perfil guardado: un snapshot con id y nombre. */
+export interface Profile extends ConfigSnapshot {
+  id: string;
+  name: string;
+}
+
+/** Igualdad de dos keymaps (null = default). */
+export function keyMapEqual(
+  a: Record<string, number> | null,
+  b: Record<string, number> | null,
+): boolean {
+  if (a === null || b === null) return a === b;
+  const keys = Object.keys(a);
+  if (keys.length !== Object.keys(b).length) return false;
+  return keys.every((k) => a[k] === b[k]);
+}
+
+/** ¿La config actual coincide con la de un perfil guardado? */
+export function configMatchesProfile(c: ConfigSnapshot, p: Profile): boolean {
+  return (
+    c.notation === p.notation &&
+    c.octaves === p.octaves &&
+    c.startMidi === p.startMidi &&
+    c.soundType === p.soundType &&
+    keyMapEqual(c.customKeyMap, p.customKeyMap)
+  );
+}

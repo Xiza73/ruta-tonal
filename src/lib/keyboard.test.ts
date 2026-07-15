@@ -1,9 +1,14 @@
 import {
+  buildProfile,
+  configMatchesProfile,
   DEFAULT_PROFILE,
+  keyLabel,
   keysForProfile,
   midiForCode,
   octaveRange,
+  type ConfigSnapshot,
   type KeyboardProfile,
+  type Profile,
 } from "./keyboard";
 
 describe("octaveRange", () => {
@@ -30,8 +35,8 @@ describe("keysForProfile", () => {
 
   test("asigna la tecla física a cada nota del rango", () => {
     const keys = keysForProfile(DEFAULT_PROFILE);
-    expect(keys[0].code).toBe("KeyA"); // C4
-    expect(keys.at(-1)!.code).toBe("KeyK"); // C5
+    expect(keys[0].code).toBe("KeyZ"); // C4 (offset 0)
+    expect(keys.at(-1)!.code).toBe("KeyQ"); // C5 (offset 12)
   });
 
   test("el mismo keyMap sirve en otra octava (offset relativo)", () => {
@@ -41,7 +46,7 @@ describe("keysForProfile", () => {
     };
     const keys = keysForProfile(profile);
     expect(keys[0].label).toBe("C3");
-    expect(keys[0].code).toBe("KeyA"); // misma tecla física, otra octava
+    expect(keys[0].code).toBe("KeyZ"); // misma tecla física, otra octava
   });
 
   test("respeta la notación del perfil", () => {
@@ -50,12 +55,70 @@ describe("keysForProfile", () => {
   });
 });
 
+describe("buildProfile", () => {
+  test("arma el perfil desde los ajustes", () => {
+    const profile = buildProfile({
+      notation: "solfege",
+      startMidi: 48,
+      octaves: 2,
+      soundType: "square",
+    });
+    expect(profile.range).toEqual({ low: 48, high: 72 });
+    expect(profile.notation).toBe("solfege");
+    expect(profile.soundType).toBe("square");
+  });
+
+  test("el perfil resultante genera las teclas correctas", () => {
+    const profile = buildProfile({
+      notation: "scientific",
+      startMidi: 60,
+      octaves: 1,
+      soundType: "sine",
+    });
+    const keys = keysForProfile(profile);
+    expect(keys).toHaveLength(13); // C4–C5
+    expect(keys[0].label).toBe("C4");
+  });
+});
+
+describe("keyLabel", () => {
+  test("prettifica el code de la tecla", () => {
+    expect(keyLabel("KeyZ")).toBe("Z");
+    expect(keyLabel("Digit2")).toBe("2");
+  });
+});
+
+describe("configMatchesProfile", () => {
+  const snapshot: ConfigSnapshot = {
+    notation: "scientific",
+    octaves: 2,
+    startMidi: 48,
+    soundType: "triangle",
+    customKeyMap: null,
+  };
+  const profile: Profile = { id: "1", name: "P", ...snapshot };
+
+  test("coincide con la misma config", () => {
+    expect(configMatchesProfile(snapshot, profile)).toBe(true);
+  });
+
+  test("no coincide si difiere un campo", () => {
+    expect(configMatchesProfile({ ...snapshot, octaves: 3 }, profile)).toBe(false);
+  });
+
+  test("compara el keymap custom", () => {
+    const p2: Profile = { ...profile, customKeyMap: { KeyZ: 0 } };
+    expect(configMatchesProfile({ ...snapshot, customKeyMap: { KeyZ: 0 } }, p2)).toBe(true);
+    expect(configMatchesProfile({ ...snapshot, customKeyMap: { KeyZ: 1 } }, p2)).toBe(false);
+  });
+});
+
 describe("midiForCode", () => {
   test("tecla mapeada → MIDI absoluto", () => {
-    expect(midiForCode(DEFAULT_PROFILE, "KeyA")).toBe(60); // C4
-    expect(midiForCode(DEFAULT_PROFILE, "KeyK")).toBe(72); // C5
+    expect(midiForCode(DEFAULT_PROFILE, "KeyZ")).toBe(60); // C4
+    expect(midiForCode(DEFAULT_PROFILE, "KeyQ")).toBe(72); // C5
   });
   test("tecla no mapeada → undefined", () => {
-    expect(midiForCode(DEFAULT_PROFILE, "KeyZ")).toBeUndefined();
+    expect(midiForCode(DEFAULT_PROFILE, "Escape")).toBeUndefined();
   });
 });

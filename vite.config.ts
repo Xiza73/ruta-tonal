@@ -1,4 +1,5 @@
 /// <reference types="vitest/config" />
+import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
@@ -9,6 +10,9 @@ export default defineConfig({
   // del compiler (reactCompilerPreset) y aún no está estable/documentada. No
   // optimiza nada con 0 componentes. Wirearlo cuando haya UI real con bench que lo pida.
   plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
+  },
   clearScreen: false,
   server: {
     port: 1420,

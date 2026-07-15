@@ -102,10 +102,10 @@ test("release detiene el oscilador y es idempotente", () => {
   expect(ctx.oscillators.at(-1)!.stopped).toBe(true);
 });
 
-test("resume y dispose delegan en el contexto", async () => {
+test("resume delega en el contexto; dispose NO lo cierra (es compartido)", async () => {
   const { ctx, synth } = setup();
   await synth.resume();
   synth.dispose();
   expect(ctx.resumed).toBe(true);
-  expect(ctx.closed).toBe(true);
+  expect(ctx.closed).toBe(false);
 });

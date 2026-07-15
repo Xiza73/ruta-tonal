@@ -1,1 +1,128 @@
 @import "tailwindcss";
+@import "./fonts.css"; /* fuentes bundleadas (offline-first) */
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+  }
+}
+
+/*
+ * Sistema de diseño (estilo neón/synthwave del referencia): navy + cyan +
+ * violeta en oscuro, crema cálido en claro. Fuentes: DM Mono (cuerpo) +
+ * Instrument Serif (display). 3 capas: primitivas → semántico → utilidades.
+ */
+
+/* 1) Primitivas: neutrales navy (para el piano/canvas) + fuentes + sombras */
+@theme {
+  --font-sans: "Quicksand", ui-sans-serif, sans-serif;
+  --font-mono: "DM Mono", ui-monospace, monospace;
+  --font-display: "Instrument Serif", ui-serif, serif;
+
+  --color-ink-50: oklch(93% 0.015 255);
+  --color-ink-100: oklch(88% 0.02 255);
+  --color-ink-300: oklch(72% 0.03 255);
+  --color-ink-500: oklch(52% 0.04 258);
+  --color-ink-700: oklch(34% 0.04 260);
+  --color-ink-900: oklch(20% 0.035 262);
+  --color-ink-950: oklch(13% 0.03 264);
+
+  --shadow-card: 0 1px 2px oklch(0% 0 0 / 0.3), 0 6px 16px oklch(0% 0 0 / 0.28);
+  --shadow-raised: 0 2px 4px oklch(0% 0 0 / 0.32), 0 10px 24px oklch(0% 0 0 / 0.4);
+}
+
+/* 2) Semántico — tema OSCURO (default) */
+:root {
+  --base: #070a12;
+  --surface: #0d1220;
+  --elevated: #151c30;
+  --border: rgba(0, 212, 255, 0.12);
+
+  --fg: #dde6f5;
+  --fg-muted: #6b7fa3;
+  --fg-subtle: #3a4a6a;
+
+  --accent: #00d4ff; /* cyan (primario) */
+  --accent-hover: #4ce0ff;
+  --accent-fg: #070a12;
+  --violet: #7b2fff; /* acento secundario */
+
+  --danger: #ff4060;
+  --danger-hover: #ff6178;
+  --success: #00ff88; /* nota afinada */
+  --pitch: #00d4ff;
+
+  /* Tecla presionada: wash en blancas, teal en negras, label teal profundo */
+  --key-active: color-mix(in srgb, var(--accent) 55%, #ffffff);
+  --key-active-sharp: color-mix(in srgb, var(--accent) 42%, #0f1420);
+  --key-active-fg: color-mix(in srgb, var(--accent) 62%, #04171d);
+}
+
+/* Tema CLARO — pastel azul (el teclado blanco resalta y hay color, no blanco) */
+.light {
+  --base: #e3ecf7; /* pastel azul */
+  --surface: #f3f8fe;
+  --elevated: #d6e4f4;
+  --border: rgba(30, 60, 110, 0.14);
+
+  --fg: #1c2740;
+  --fg-muted: #566288;
+  --fg-subtle: #92a1c2;
+
+  --accent: #1488c4; /* cyan-azul, legible sobre pastel */
+  --accent-hover: #0f74a8;
+  --accent-fg: #ffffff;
+  --violet: #6a3fd4;
+
+  --danger: #d24455;
+  --danger-hover: #b93646;
+  --success: #2a9d6a;
+  --pitch: #1488c4;
+
+  --key-active: color-mix(in srgb, var(--accent) 26%, #ffffff);
+  --key-active-sharp: color-mix(in srgb, var(--accent) 42%, #0f1420);
+  --key-active-fg: color-mix(in srgb, var(--accent) 70%, #06202c);
+}
+
+/* 3) Exposición como utilidades de Tailwind */
+@theme inline {
+  --color-base: var(--base);
+  --color-surface: var(--surface);
+  --color-elevated: var(--elevated);
+  --color-border: var(--border);
+
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-violet: var(--violet);
+
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-success: var(--success);
+  --color-pitch: var(--pitch);
+  --color-key-active: var(--key-active);
+  --color-key-active-sharp: var(--key-active-sharp);
+  --color-key-active-fg: var(--key-active-fg);
+
+  /* shadcn/ui */
+  --color-background: var(--base);
+  --color-foreground: var(--fg);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--fg);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--fg);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-fg);
+  --color-secondary: var(--elevated);
+  --color-secondary-foreground: var(--fg);
+  --color-muted: var(--elevated);
+  --color-muted-foreground: var(--fg-muted);
+  --color-accent-foreground: var(--accent-fg);
+  --color-destructive: var(--danger);
+  --color-input: var(--elevated);
+  --color-ring: var(--accent);
+}

@@ -7,6 +7,7 @@
  */
 
 import { midiToFrequency } from "../lib/notes";
+import { getAudioContext } from "./context";
 
 /** Rampas cortas para evitar los clicks de arrancar/cortar en seco. */
 const ATTACK_S = 0.005;
@@ -33,12 +34,12 @@ export interface Synth {
   setType(type: OscillatorType): void;
   /** Llamar tras un gesto del usuario (autoplay policy del browser). */
   resume(): Promise<void>;
-  /** Libera el contexto y el grafo. */
+  /** Libera el grafo del synth. El AudioContext es compartido: no se cierra. */
   dispose(): void;
 }
 
 export function createSynth(options: SynthOptions = {}): Synth {
-  const ctx = options.context ?? new AudioContext();
+  const ctx = options.context ?? getAudioContext();
   let type: OscillatorType = options.type ?? "triangle";
 
   const master = ctx.createGain();
@@ -86,7 +87,7 @@ export function createSynth(options: SynthOptions = {}): Synth {
     resume: () => ctx.resume(),
     dispose() {
       master.disconnect();
-      void ctx.close();
+      // El contexto es compartido con el detector: NO se cierra acá.
     },
   };
 }

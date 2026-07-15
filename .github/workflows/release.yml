@@ -1,0 +1,54 @@
+name: release
+
+# Buildea instaladores en su propio SO (Mac NO se puede cross-compilar desde
+# Windows) y publica un Release de GitHub con los binarios adjuntos.
+# Disparadores: push de un tag `v*` (ej. v0.1.0) o manual.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  release:
+    permissions:
+      contents: write # crear el release y subir los instaladores
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest # .dmg universal (Intel + Apple Silicon)
+            args: --target universal-apple-darwin
+          - platform: windows-latest # .msi (WiX) + .exe (NSIS)
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ./src-tauri -> target
+
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Build app and publish release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__ # __VERSION__ ← version de tauri.conf.json
+          releaseName: "Ruta Tonal v__VERSION__"
+          releaseBody: "Instaladores offline para Windows (.msi / .exe) y macOS (.dmg universal). Descargá el que corresponda a tu sistema desde los assets de abajo."
+          releaseDraft: true # queda en borrador para que lo revises y publiques
+          prerelease: false
+          args: ${{ matrix.args }}

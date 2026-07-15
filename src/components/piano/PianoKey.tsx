@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { KeyboardKey } from "../../lib/keyboard";
+import { keyLabel, type KeyboardKey } from "../../lib/keyboard";
 import { cn } from "../../lib/cn";
 
 interface PianoKeyProps {
@@ -7,12 +7,21 @@ interface PianoKeyProps {
   active: boolean;
   onPress: (midi: number) => void;
   onRelease: (midi: number) => void;
-  /** Posición de las teclas negras (dinámica → va por style). */
+  configMode?: boolean;
+  selected?: boolean;
   style?: CSSProperties;
 }
 
-/** Una tecla. Presentacional puro: sin audio, solo eventos hacia el container. */
-export function PianoKey({ k, active, onPress, onRelease, style }: PianoKeyProps) {
+/** Una tecla. Estilo neón: blancas off-white, negras navy, presionada = cyan glow. */
+export function PianoKey({
+  k,
+  active,
+  onPress,
+  onRelease,
+  configMode = false,
+  selected = false,
+  style,
+}: PianoKeyProps) {
   return (
     <button
       type="button"
@@ -22,16 +31,29 @@ export function PianoKey({ k, active, onPress, onRelease, style }: PianoKeyProps
       onPointerDown={() => onPress(k.midi)}
       onPointerUp={() => onRelease(k.midi)}
       onPointerLeave={(e) => {
-        if (e.buttons) onRelease(k.midi); // arrastraste el mouse fuera con el botón apretado
+        if (!configMode && e.buttons) onRelease(k.midi);
       }}
       className={cn(
-        "flex items-end justify-center pb-2 text-xs font-medium select-none",
+        "flex flex-col items-center justify-end gap-1 pb-2 text-[10px] font-medium select-none transition-[background,box-shadow] duration-75",
         k.isSharp
-          ? "absolute top-0 z-10 h-24 w-6 -translate-x-1/2 rounded-b border border-slate-900 bg-slate-900 text-slate-300"
-          : "h-40 w-10 rounded-b border border-slate-300 bg-white text-slate-500",
-        active && (k.isSharp ? "bg-blue-600 text-white" : "bg-blue-200 text-blue-900"),
+          ? "absolute top-0 z-10 h-[62%] -translate-x-1/2 rounded-b border border-white/10 bg-[#10141e] text-fg-muted shadow-[2px_5px_10px_rgba(0,0,0,0.6)]"
+          : "mx-[2px] h-full flex-1 rounded-b border border-black/10 bg-white text-ink-950 shadow-[0_4px_8px_rgba(0,0,0,0.45)]",
+        active && !k.isSharp && "bg-key-active text-key-active-fg",
+        active && k.isSharp && "bg-key-active-sharp text-ink-50",
+        selected && "z-20 ring-2 ring-accent ring-inset",
       )}
     >
+      {configMode && (
+        <span
+          className={cn(
+            "rounded px-1 text-[9px] leading-tight",
+            k.isSharp ? "bg-white/15" : "bg-black/10",
+            !k.code && "opacity-40",
+          )}
+        >
+          {k.code ? keyLabel(k.code) : "·"}
+        </span>
+      )}
       {k.label}
     </button>
   );
