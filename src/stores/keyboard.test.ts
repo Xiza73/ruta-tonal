@@ -30,13 +30,27 @@ test("bindKey asigna una tecla a un offset", () => {
   expect(useKeyboardStore.getState().customKeyMap?.["KeyP"]).toBe(5);
 });
 
-test("bindKey deja una sola tecla por nota (libera la previa)", () => {
+test("bindKey permite varias teclas para la misma nota", () => {
   const { bindKey } = useKeyboardStore.getState();
   bindKey("KeyP", 5);
-  bindKey("KeyO", 5); // misma nota, otra tecla
+  bindKey("KeyO", 5); // misma nota, segunda tecla: ambas quedan
   const map = useKeyboardStore.getState().customKeyMap!;
+  expect(map["KeyP"]).toBe(5);
   expect(map["KeyO"]).toBe(5);
-  expect(map["KeyP"]).toBeUndefined();
+});
+
+test("bindKey es toggle: re-bindear la misma tecla a su nota la quita", () => {
+  const { bindKey } = useKeyboardStore.getState();
+  bindKey("KeyP", 5);
+  bindKey("KeyP", 5); // segunda vez sobre la misma nota → la libera
+  expect(useKeyboardStore.getState().customKeyMap!["KeyP"]).toBeUndefined();
+});
+
+test("bindKey mueve una tecla si ya estaba en otra nota (una tecla, una nota)", () => {
+  const { bindKey } = useKeyboardStore.getState();
+  bindKey("KeyP", 5);
+  bindKey("KeyP", 7); // misma tecla, otra nota → se mueve
+  expect(useKeyboardStore.getState().customKeyMap!["KeyP"]).toBe(7);
 });
 
 test("resetKeyMap vuelve al default (null)", () => {

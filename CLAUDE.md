@@ -25,11 +25,14 @@ abierta a que el detector reconozca lo que suena en el teclado virtual.
 Músicos, estudiantes y curiosos que quieren identificar/entrenar notas sin
 depender de internet.
 
-**MVP (primero esto):**
+**MVP — ✅ entregado (v0.2.0):**
 1. Teclado virtual que suena y resalta la nota tocada.
 2. Configuración del teclado: notación (C/Do), tamaño, tipo de sonido.
 3. Detector de pitch por micrófono con **gráfico de afinación en el tiempo**
    (piano roll vertical + traza scrolleando), no solo la nota actual.
+
+Además ya implementado: mapeo de teclas físicas remapeable (**varias teclas por
+nota**), perfiles guardados y temas claro/oscuro.
 
 **Fuera del MVP (después):** sync entre dispositivos, librerías de sonidos
 extra, que el detector vincule lo del teclado, guardado de configuraciones en la
@@ -52,8 +55,7 @@ nube.
 
 ## Comandos clave
 
-> Scripts previstos en `package.json` (el proyecto aún no está scaffolded).
-> Confirmar/crear al inicializar Tauri.
+> El proyecto ya está scaffoldeado y estos scripts funcionan. Package manager: bun.
 
 ```bash
 bun install            # instalar dependencias

@@ -27,8 +27,8 @@ export interface KeyboardProfile {
 export interface KeyboardKey extends Note {
   /** Tecla negra (sostenido) vs blanca. */
   isSharp: boolean;
-  /** KeyboardEvent.code físico asignado, si hay. */
-  code?: string;
+  /** KeyboardEvent.code(s) físicos asignados a esta nota (puede haber más de uno). */
+  codes: string[];
 }
 
 /** Rango de `octaves` octavas desde una nota MIDI (inclusivo en ambos extremos). */
@@ -38,9 +38,12 @@ export function octaveRange(startMidi: number, octaves: number): { low: number; 
 
 /** Notas del teclado de grave a aguda, con su tecla física asignada. */
 export function keysForProfile(profile: KeyboardProfile): KeyboardKey[] {
-  const offsetToCode = new Map<number, string>();
+  // Un offset puede tener varias teclas físicas (varias keys → misma nota).
+  const offsetToCodes = new Map<number, string[]>();
   for (const [code, offset] of Object.entries(profile.keyMap)) {
-    if (!offsetToCode.has(offset)) offsetToCode.set(offset, code);
+    const list = offsetToCodes.get(offset);
+    if (list) list.push(code);
+    else offsetToCodes.set(offset, [code]);
   }
 
   const keys: KeyboardKey[] = [];
@@ -49,7 +52,7 @@ export function keysForProfile(profile: KeyboardProfile): KeyboardKey[] {
     keys.push({
       ...note,
       isSharp: note.name.includes("#"),
-      code: offsetToCode.get(midi - profile.range.low),
+      codes: offsetToCodes.get(midi - profile.range.low) ?? [],
     });
   }
   return keys;
@@ -129,9 +132,25 @@ export function buildProfile(settings: ProfileSettings): KeyboardProfile {
   };
 }
 
-/** Etiqueta corta de un KeyboardEvent.code: "KeyZ" → "Z", "Digit2" → "2". */
+/** Símbolos cortos para teclas no alfanuméricas (KeyboardEvent.code → glifo). */
+const SPECIAL_KEY_LABELS: Record<string, string> = {
+  Semicolon: ";",
+  Quote: "'",
+  Comma: ",",
+  Period: ".",
+  Slash: "/",
+  Backslash: "\\",
+  BracketLeft: "[",
+  BracketRight: "]",
+  Backquote: "`",
+  Minus: "-",
+  Equal: "=",
+  Space: "␣",
+};
+
+/** Etiqueta corta de un KeyboardEvent.code: "KeyZ" → "Z", "Semicolon" → ";". */
 export function keyLabel(code: string): string {
-  return code.replace(/^Key/, "").replace(/^Digit/, "");
+  return SPECIAL_KEY_LABELS[code] ?? code.replace(/^Key/, "").replace(/^Digit/, "");
 }
 
 /** Snapshot de la config del teclado (lo que compone un perfil). */
