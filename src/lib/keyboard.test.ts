@@ -35,8 +35,24 @@ describe("keysForProfile", () => {
 
   test("asigna la tecla física a cada nota del rango", () => {
     const keys = keysForProfile(DEFAULT_PROFILE);
-    expect(keys[0].code).toBe("KeyZ"); // C4 (offset 0)
-    expect(keys.at(-1)!.code).toBe("KeyQ"); // C5 (offset 12)
+    expect(keys[0].codes).toContain("KeyZ"); // C4 (offset 0)
+    expect(keys.at(-1)!.codes).toContain("KeyQ"); // C5 (offset 12)
+  });
+
+  test("una nota puede tener varias teclas físicas", () => {
+    const profile: KeyboardProfile = {
+      ...DEFAULT_PROFILE,
+      keyMap: { KeyZ: 0, KeyA: 0 }, // dos teclas → misma nota (offset 0)
+    };
+    const keys = keysForProfile(profile);
+    expect(keys[0].codes).toEqual(expect.arrayContaining(["KeyZ", "KeyA"]));
+    expect(keys[0].codes).toHaveLength(2);
+  });
+
+  test("nota sin tecla asignada → codes vacío", () => {
+    const profile: KeyboardProfile = { ...DEFAULT_PROFILE, keyMap: {} };
+    const keys = keysForProfile(profile);
+    expect(keys[0].codes).toEqual([]);
   });
 
   test("el mismo keyMap sirve en otra octava (offset relativo)", () => {
@@ -46,7 +62,7 @@ describe("keysForProfile", () => {
     };
     const keys = keysForProfile(profile);
     expect(keys[0].label).toBe("C3");
-    expect(keys[0].code).toBe("KeyZ"); // misma tecla física, otra octava
+    expect(keys[0].codes).toContain("KeyZ"); // misma tecla física, otra octava
   });
 
   test("respeta la notación del perfil", () => {
@@ -85,6 +101,12 @@ describe("keyLabel", () => {
   test("prettifica el code de la tecla", () => {
     expect(keyLabel("KeyZ")).toBe("Z");
     expect(keyLabel("Digit2")).toBe("2");
+  });
+
+  test("mapea teclas especiales a su símbolo corto", () => {
+    expect(keyLabel("Semicolon")).toBe(";");
+    expect(keyLabel("Slash")).toBe("/");
+    expect(keyLabel("BracketLeft")).toBe("[");
   });
 });
 

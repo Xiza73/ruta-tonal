@@ -25,7 +25,11 @@ interface KeyboardState {
   setStartMidi: (startMidi: number) => void;
   setSoundType: (soundType: SoundType) => void;
   setConfigMode: (configMode: boolean) => void;
-  /** Asigna una tecla física a un offset (una tecla por nota). */
+  /**
+   * Toggle de una tecla física sobre un offset. Una tecla dispara UNA nota
+   * (si estaba en otra, se mueve), pero una nota admite VARIAS teclas. Si la
+   * tecla ya estaba en esta nota, se libera.
+   */
   bindKey: (code: string, offset: number) => void;
   /** Vuelve al mapeo default. */
   resetKeyMap: () => void;
@@ -59,13 +63,15 @@ export const useKeyboardStore = create<KeyboardState>()(
       bindKey: (code, offset) =>
         set((s) => {
           const base = s.customKeyMap ?? DEFAULT_KEYMAP;
-          // Una tecla por nota: soltamos la tecla previa de ese offset y el
-          // binding previo de `code`, y asignamos code → offset.
-          const next: Record<string, number> = {};
-          for (const [c, o] of Object.entries(base)) {
-            if (c !== code && o !== offset) next[c] = o;
+          const next: Record<string, number> = { ...base };
+          if (next[code] === offset) {
+            // Ya estaba en esta nota → toggle off (la liberamos).
+            delete next[code];
+          } else {
+            // Agrega o mueve: la tecla queda en UNA sola nota, pero la nota
+            // puede tener varias teclas (no expulsamos las otras del offset).
+            next[code] = offset;
           }
-          next[code] = offset;
           return { customKeyMap: next };
         }),
       resetKeyMap: () => set({ customKeyMap: null }),
