@@ -43,17 +43,31 @@ export function PianoKey({
         selected && "z-20 ring-2 ring-accent ring-inset",
       )}
     >
-      {configMode && (
-        <span
-          className={cn(
-            "rounded px-1 text-[9px] leading-tight",
-            k.isSharp ? "bg-white/15" : "bg-black/10",
-            !k.code && "opacity-40",
-          )}
-        >
-          {k.code ? keyLabel(k.code) : "·"}
-        </span>
-      )}
+      {configMode &&
+        (k.codes.length > 0 ? (
+          <span className="flex flex-wrap justify-center gap-0.5">
+            {k.codes.map((code) => (
+              <span
+                key={code}
+                className={cn(
+                  "rounded px-1 text-[9px] leading-tight",
+                  k.isSharp ? "bg-white/15" : "bg-black/10",
+                )}
+              >
+                {keyLabel(code)}
+              </span>
+            ))}
+          </span>
+        ) : (
+          <span
+            className={cn(
+              "rounded px-1 text-[9px] leading-tight opacity-40",
+              k.isSharp ? "bg-white/15" : "bg-black/10",
+            )}
+          >
+            ·
+          </span>
+        ))}
       {k.label}
     </button>
   );
