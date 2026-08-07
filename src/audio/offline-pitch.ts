@@ -7,7 +7,7 @@
  */
 
 import { PitchDetector as Pitchy } from "pitchy";
-import type { DetectedNote } from "../lib/notes";
+import { frequencyToNote, type DetectedNote, type Notation } from "../lib/notes";
 import { readingToNote, type PitchGateOptions } from "./pitch";
 
 export interface PitchSample {
@@ -52,4 +52,29 @@ export function trackPitch(
   }
 
   return track;
+}
+
+/**
+ * Nota representativa de un tramo, por MEDIANA de las frecuencias detectadas.
+ *
+ * Es la operación que necesita el módulo de letras: dada una palabra con sus
+ * tiempos, qué nota se cantó. Ventana por ventana no sirve — el vibrato hace
+ * oscilar el pitch de forma legítima (±100 cents en un cantante lírico) y la
+ * lectura salta de nota. La mediana sobre el tramo cancela esa oscilación.
+ *
+ * Mediana y no promedio: es inmune a los outliers de las consonantes y los
+ * ataques, donde el pitch todavía no se estabilizó.
+ */
+export function noteInSpan(
+  track: PitchSample[],
+  from: number,
+  to: number,
+  notation: Notation = "scientific",
+): DetectedNote | null {
+  const frequencies = track
+    .filter((s) => s.note !== null && s.time >= from && s.time < to)
+    .map((s) => s.note!.frequency)
+    .sort((a, b) => a - b);
+  if (frequencies.length === 0) return null;
+  return frequencyToNote(frequencies[Math.floor(frequencies.length / 2)], notation);
 }

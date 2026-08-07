@@ -1,7 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { trackPitch } from "./offline-pitch";
+import { noteInSpan, trackPitch } from "./offline-pitch";
 
 const SAMPLE_RATE = 44100;
+
+/**
+ * Voz cantada sintética: armónicos + vibrato.
+ * La fase se INTEGRA muestra a muestra; escribir `sin(2π·f(t)·t)` no es
+ * modulación de frecuencia y produce excursiones enormes.
+ */
+function sungVoice(f0: number, seconds: number, vibratoCents: number): Float32Array {
+  const samples = new Float32Array(Math.round(SAMPLE_RATE * seconds));
+  let phase = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const vibrato = vibratoCents * Math.sin((2 * Math.PI * 5.5 * i) / SAMPLE_RATE);
+    phase += (2 * Math.PI * f0 * 2 ** (vibrato / 1200)) / SAMPLE_RATE;
+    let value = 0;
+    for (let harmonic = 1; harmonic <= 6; harmonic++) {
+      value += (1 / harmonic) * Math.sin(phase * harmonic);
+    }
+    samples[i] = value * 0.3;
+  }
+  return samples;
+}
 
 /** Suma de senos. Cada parcial es [frecuencia Hz, amplitud]. */
 function tone(partials: [number, number][], seconds: number): Float32Array {
@@ -77,5 +97,39 @@ describe("trackPitch", () => {
   it("aislar la voz de esa misma mezcla sí devuelve A4", () => {
     const isolated = tone([[440, 0.3]], 1);
     expect(dominantNote(trackPitch(isolated, SAMPLE_RATE))).toBe("A4");
+  });
+
+  it("sobre voz cantada con armónicos sigue el vibrato sin perder lecturas", () => {
+    const track = trackPitch(sungVoice(220, 1.5, 50), SAMPLE_RATE);
+    // Cero silencio: el umbral del afinador en vivo sirve tal cual para voz.
+    expect(track.every((s) => s.note !== null)).toBe(true);
+    // El error sigue al vibrato, no lo excede: |desviación| ≤ la profundidad.
+    const worst = Math.max(...track.map((s) => Math.abs(1200 * Math.log2(s.note!.frequency / 220))));
+    expect(worst).toBeLessThanOrEqual(50);
+  });
+});
+
+describe("noteInSpan", () => {
+  it("recupera la nota cantada aunque el vibrato haga saltar las lecturas", () => {
+    const track = trackPitch(sungVoice(220, 1.5, 100), SAMPLE_RATE);
+    // Vibrato ±100 cents = un semitono completo: ventana a ventana salta de nota.
+    expect(new Set(track.map((s) => s.note?.label)).size).toBeGreaterThan(1);
+    // La mediana sobre el tramo lo resuelve igual.
+    expect(noteInSpan(track, 0, 1.5)?.label).toBe("A3");
+  });
+
+  it("distingue notas por tramo, como palabras de una letra", () => {
+    const samples = new Float32Array(SAMPLE_RATE * 2);
+    samples.set(sungVoice(220, 1, 30), 0); // A3
+    samples.set(sungVoice(440, 1, 30), SAMPLE_RATE); // A4
+    const track = trackPitch(samples, SAMPLE_RATE);
+
+    expect(noteInSpan(track, 0.1, 0.9)?.label).toBe("A3");
+    expect(noteInSpan(track, 1.1, 1.9)?.label).toBe("A4");
+  });
+
+  it("devuelve null en un tramo sin lecturas", () => {
+    const track = trackPitch(sungVoice(220, 0.5, 0), SAMPLE_RATE);
+    expect(noteInSpan(track, 10, 20)).toBeNull();
   });
 });
