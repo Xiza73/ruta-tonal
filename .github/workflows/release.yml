@@ -19,8 +19,12 @@ jobs:
         include:
           - platform: macos-latest # .dmg universal (Intel + Apple Silicon)
             args: --target universal-apple-darwin
+            # Tauri exige que los sidecars sean universales cuando el target lo
+            # es: no se pueden mezclar arquitecturas.
+            sidecarTriple: universal-apple-darwin
           - platform: windows-latest # .msi (WiX) + .exe (NSIS)
             args: ""
+            sidecarTriple: x86_64-pc-windows-msvc
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
@@ -40,6 +44,11 @@ jobs:
 
       - name: Install frontend dependencies
         run: bun install
+
+      # externalBin apunta a binarios que no estan en el repo (115 MB): sin este
+      # paso `tauri build` falla porque no los encuentra.
+      - name: Fetch sidecars
+        run: bun run sidecar:fetch --triple ${{ matrix.sidecarTriple }}
 
       - name: Build app and publish release
         uses: tauri-apps/tauri-action@v0

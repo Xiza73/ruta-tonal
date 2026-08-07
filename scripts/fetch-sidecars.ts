@@ -6,9 +6,11 @@
  * - deno:   runtime JS que yt-dlp necesita para la extracción completa. Sin él
  *           avisa "some formats may be missing" y puede fallar en algunos videos.
  *
- * No se commitean: ~18 MB y ~40 MB, y se actualizan seguido.
+ * No se commitean: ~18 MB y ~97 MB, y se actualizan seguido.
  *
- *   bun run sidecar:fetch [--force]
+ *   bun run sidecar:fetch                                  # triple del host
+ *   bun run sidecar:fetch --triple universal-apple-darwin  # release de macOS
+ *   bun run sidecar:fetch --force                          # rebajar si ya existen
  */
 import { execFileSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, readdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
@@ -18,25 +20,30 @@ import { join } from "node:path";
 const YT_DLP = "https://github.com/yt-dlp/yt-dlp/releases/latest/download";
 const DENO = "https://github.com/denoland/deno/releases/latest/download";
 
-const triple = execFileSync("rustc", ["-vV"], { encoding: "utf8" })
-  .split("\n")
-  .find((l) => l.startsWith("host:"))
-  ?.slice(5)
-  .trim();
-if (!triple) throw new Error("No pude leer el target triple de `rustc -vV`. ¿Está Rust instalado?");
+/** Target de macOS que fusiona ambas arquitecturas. */
+const UNIVERSAL = "universal-apple-darwin";
+/** Arquitecturas que hay que unir con lipo para armar el universal. */
+const UNIVERSAL_PARTS = ["x86_64-apple-darwin", "aarch64-apple-darwin"];
+
+function hostTriple(): string {
+  const host = execFileSync("rustc", ["-vV"], { encoding: "utf8" })
+    .split("\n")
+    .find((l) => l.startsWith("host:"))
+    ?.slice(5)
+    .trim();
+  if (!host) throw new Error("No pude leer el target triple de `rustc -vV`. ¿Está Rust instalado?");
+  return host;
+}
+
+const argv = process.argv.slice(2);
+const flag = argv.indexOf("--triple");
+const triple = flag >= 0 ? argv[flag + 1] : hostTriple();
+if (!triple) throw new Error("--triple necesita un valor");
+const force = argv.includes("--force");
 
 const isWindows = triple.includes("windows");
 const ext = isWindows ? ".exe" : "";
 const dir = join(import.meta.dir, "..", "src-tauri", "binaries");
-const force = process.argv.includes("--force");
-
-/** Qué asset de yt-dlp corresponde a cada plataforma. */
-function ytDlpAsset(): string {
-  if (isWindows) return "yt-dlp.exe";
-  if (triple!.includes("apple")) return "yt-dlp_macos"; // universal: intel y arm
-  if (triple!.includes("linux")) return "yt-dlp_linux";
-  throw new Error(`Plataforma no soportada: ${triple}`);
-}
 
 async function download(url: string, dest: string): Promise<void> {
   const res = await fetch(url);
@@ -61,34 +68,60 @@ function unzip(zip: string, into: string): void {
   }
 }
 
+/** Baja el zip de deno de una arquitectura y devuelve la ruta del binario suelto. */
+async function denoBinary(archTriple: string, workDir: string): Promise<string> {
+  // Los assets de release de deno usan exactamente los target triples de Rust.
+  const zip = join(workDir, `${archTriple}.zip`);
+  const out = join(workDir, archTriple);
+  await download(`${DENO}/deno-${archTriple}.zip`, zip);
+  unzip(zip, out);
+  const inner = readdirSync(out).find((f) => f === `deno${ext}`);
+  if (!inner) throw new Error(`El zip de deno para ${archTriple} no traía deno${ext}`);
+  return join(out, inner);
+}
+
 async function fetchYtDlp(): Promise<void> {
   const dest = join(dir, `yt-dlp-${triple}${ext}`);
-  if (existsSync(dest) && !force) return console.log(`yt-dlp  ya existe`);
-  console.log(`yt-dlp  bajando ${ytDlpAsset()}`);
-  await download(`${YT_DLP}/${ytDlpAsset()}`, dest);
+  if (existsSync(dest) && !force) return console.log("yt-dlp  ya existe");
+
+  // yt-dlp_macos ya viene universal (Intel + Apple Silicon), así que sirve
+  // tal cual para el target universal-apple-darwin.
+  let asset: string;
+  if (isWindows) asset = "yt-dlp.exe";
+  else if (triple.includes("apple")) asset = "yt-dlp_macos";
+  else if (triple.includes("linux")) asset = "yt-dlp_linux";
+  else throw new Error(`Plataforma no soportada: ${triple}`);
+
+  console.log(`yt-dlp  bajando ${asset}`);
+  await download(`${YT_DLP}/${asset}`, dest);
   if (!isWindows) chmodSync(dest, 0o755);
 }
 
 async function fetchDeno(): Promise<void> {
   const dest = join(dir, `deno-${triple}${ext}`);
-  if (existsSync(dest) && !force) return console.log(`deno    ya existe`);
-  // Los assets de deno usan exactamente los target triples de Rust.
-  console.log(`deno    bajando deno-${triple}.zip`);
-  const tmp = join(tmpdir(), `deno-${triple}-${process.pid}`);
-  const zip = `${tmp}.zip`;
+  if (existsSync(dest) && !force) return console.log("deno    ya existe");
+
+  const work = join(tmpdir(), `deno-sidecar-${process.pid}`);
+  mkdirSync(work, { recursive: true });
   try {
-    await download(`${DENO}/deno-${triple}.zip`, zip);
-    unzip(zip, tmp);
-    const inner = readdirSync(tmp).find((f) => f === `deno${ext}`);
-    if (!inner) throw new Error(`El zip de deno no traía deno${ext}`);
-    renameSync(join(tmp, inner), dest);
+    if (triple === UNIVERSAL) {
+      // Tauri exige que el sidecar TAMBIEN sea universal cuando el target lo es;
+      // no se puede mezclar. deno publica por arquitectura, asi que las unimos.
+      console.log(`deno    bajando ${UNIVERSAL_PARTS.join(" + ")} y uniendo con lipo`);
+      const parts: string[] = [];
+      for (const part of UNIVERSAL_PARTS) parts.push(await denoBinary(part, work));
+      execFileSync("lipo", ["-create", "-output", dest, ...parts]);
+    } else {
+      console.log(`deno    bajando deno-${triple}.zip`);
+      renameSync(await denoBinary(triple, work), dest);
+    }
     if (!isWindows) chmodSync(dest, 0o755);
   } finally {
-    rmSync(zip, { force: true });
-    rmSync(tmp, { recursive: true, force: true });
+    rmSync(work, { recursive: true, force: true });
   }
 }
 
+console.log(`target triple: ${triple}`);
 mkdirSync(dir, { recursive: true });
 await fetchYtDlp();
 await fetchDeno();
