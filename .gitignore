@@ -11,6 +11,8 @@ build/
 
 # Tauri / Rust
 src-tauri/target/
+# Sidecars: se bajan con `bun run sidecar:fetch`, no se commitean (~17 MB)
+src-tauri/binaries/
 
 # Tests
 coverage/

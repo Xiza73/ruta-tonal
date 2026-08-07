@@ -12,7 +12,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "sidecar:fetch": "bun run scripts/fetch-sidecars.ts"
   },
   "dependencies": {
     "@radix-ui/react-select": "^2.3.3",
