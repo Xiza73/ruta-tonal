@@ -93,9 +93,14 @@ ruta-tonal/
 │   └── App.tsx
 ├── src-tauri/            # Backend Rust (Tauri)
 ├── tests/                # E2E (Playwright)
-├── .claude/              # config de Claude Code (este árbol)
-└── skills/               # skills de proceso (git-flow, github-pr, delivery-handoff)
+└── .claude/              # config de Claude Code: skills, agents, commands
 ```
+
+> Los skills de proceso (`git-flow`, `github-pr`, `delivery-handoff`,
+> `tauri-v2`, `vitest`, `web-audio`, `refactoring-ui`) son **globales**, no del
+> repo: viven en `Codes/SKILLS/skills` y se exponen vía junction en
+> `~/.claude/skills/`. Los específicos de este proyecto (`deploy`,
+> `security-review`) sí están en `.claude/skills/`.
 
 ## Integraciones externas
 
