@@ -25,3 +25,28 @@ tauri = { version = "2.11.3", features = [] }
 tauri-plugin-log = "2"
 tauri-plugin-shell = "2"
 url = "2"
+
+# Separación de voz (HTDemucs sobre ONNX Runtime).
+#
+# default-features = false deja SOLO CPU. Las features por default activan cuda,
+# coreml, directml, onednn y xnnpack a la vez, y compilar providers de GPU que el
+# runner de CI no tiene rompe el build de release.
+#
+# Medido sobre una canción de 4 min (calidad idéntica en los tres casos):
+#   solo CPU        344s   ← el mejor
+#   + xnnpack       512s   ← 49% MAS LENTO, no reintentar: xnnpack está pensado
+#                            para modelos de móvil/cuantizados, y HTDemucs es un
+#                            híbrido conv/transformer grande en float32
+#   demucs (Python) 160s   ← referencia; PyTorch con sus optimizaciones de CPU
+#
+# Queda 2.15x más lento que la referencia. Es un job cacheado por canción, así
+# que se banca. Si algún día molesta, el camino es directml/coreml por
+# plataforma, no otro acelerador de CPU.
+stem-splitter-core = { version = "1.2", default-features = false }
+
+# No se usa directo: está acá por UNIFICACIÓN DE FEATURES. stem-splitter-core
+# trae symphonia con solo mp3+wav, así que su decodificador no lee el m4a que
+# baja yt-dlp. Declarándolo acá con aac+isomp4, el build compartido de symphonia
+# los incluye y `read_audio` aprende a abrirlo — sin escribir un decodificador
+# propio y sin bundlear ffmpeg.
+symphonia = { version = "0.5", features = ["aac", "isomp4"] }
