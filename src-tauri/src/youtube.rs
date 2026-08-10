@@ -95,10 +95,11 @@ pub async fn download_audio(app: AppHandle, url: String) -> Result<String, Strin
         .map_err(|e| format!("Falló la ejecución de yt-dlp: {e}"))?;
 
     if !output.status.success() {
-        let err = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
-            "yt-dlp falló: {}",
-            err.lines().last().unwrap_or("sin detalle")
+        return Err(crate::proc::describe_failure(
+            "yt-dlp",
+            output.status.code(),
+            &output.stdout,
+            &output.stderr,
         ));
     }
 

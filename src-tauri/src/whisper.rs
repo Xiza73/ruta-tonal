@@ -21,8 +21,6 @@ use tauri_plugin_shell::ShellExt;
 const MODEL_FILE: &str = "ggml-small.bin";
 const MODEL_URL: &str =
     "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
-/// `-dtw` necesita saber a qué modelo corresponden las cabezas de alineamiento.
-const DTW_PRESET: &str = "small";
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Word {
@@ -147,9 +145,11 @@ pub async fn transcribe_words(app: AppHandle, wav_path: String) -> Result<Vec<Wo
             "-ml",
             "1", // un segmento por palabra…
             "-sow", // …cortando por palabra y no por token
-            "-dtw",
-            DTW_PRESET, // timestamps por DTW, más precisos que la heurística
-            "-sns",     // suprime tokens de no-habla: reduce las alucinaciones
+            "-sns", // suprime tokens de no-habla: reduce las alucinaciones
+            // NO se usa -dtw: whisper-cli lo desactiva solo cuando flash
+            // attention está activa (que es el default), y forzarlo con -nfa
+            // rompe la segmentación por palabra — medido, 32 segmentos de 10s
+            // en vez de 127 palabras.
             "-oj",
             "-of",
             &out_base.to_string_lossy(),
@@ -160,10 +160,11 @@ pub async fn transcribe_words(app: AppHandle, wav_path: String) -> Result<Vec<Wo
         .map_err(|e| format!("No pude ejecutar whisper-cli: {e}"))?;
 
     if !output.status.success() {
-        let err = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
-            "whisper-cli falló: {}",
-            err.lines().last().unwrap_or("sin detalle")
+        return Err(crate::proc::describe_failure(
+            "whisper-cli",
+            output.status.code(),
+            &output.stdout,
+            &output.stderr,
         ));
     }
 

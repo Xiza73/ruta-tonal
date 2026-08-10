@@ -164,9 +164,13 @@ async function fetchWhisper(): Promise<void> {
       unzip(zip, work);
       // El zip trae media docena de binarios de ejemplo; solo queremos el CLI y
       // las DLLs de ggml, que se despachan según el CPU en runtime.
+      // El zip trae media docena de binarios de ejemplo, pero se copian TODAS
+      // las bibliotecas y no una lista blanca: filtrar por `ggml*.dll` dejaba
+      // afuera whisper.dll, y sin ella el ejecutable ni arranca (exit 127 sin
+      // una línea de error). Las de más pesan 3 MB; equivocarse cuesta más.
       const from = join(work, "Release");
       for (const file of readdirSync(from)) {
-        if (file === "whisper-cli.exe" || /^ggml.*\.dll$/.test(file)) {
+        if (file === "whisper-cli.exe" || file.endsWith(".dll")) {
           copyFileSync(join(from, file), join(out, file));
         }
       }
@@ -176,9 +180,15 @@ async function fetchWhisper(): Promise<void> {
       const tar = join(work, "w.tar.gz");
       await download(`${WHISPER}/whisper-bin-ubuntu-${arch}.tar.gz`, tar);
       execFileSync("tar", ["-xzf", tar, "-C", work]);
+      // Igual que en Windows: el binario Y sus bibliotecas. Copiar solo el
+      // ejecutable lo deja sin libwhisper/libggml y no arranca.
       for (const file of readdirSync(work, { recursive: true, encoding: "utf8" })) {
-        if (/(^|[\\/])whisper-cli$/.test(file)) copyFileSync(join(work, file), join(out, "whisper-cli"));
+        const name = file.split(/[\\/]/).pop() ?? "";
+        if (name === "whisper-cli" || name.includes(".so")) {
+          copyFileSync(join(work, file), join(out, name));
+        }
       }
+      if (!existsSync(join(out, "whisper-cli"))) throw new Error("El tar.gz no traía whisper-cli");
       chmodSync(join(out, "whisper-cli"), 0o755);
     } else if (triple.includes("apple")) {
       // No hay binario publicado para macOS: se compila.
