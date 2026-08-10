@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "ruta-tonal",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "identifier": "com.rutatonal.app",
   "build": {
     "frontendDist": "../dist",
@@ -23,12 +23,25 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$APPCACHE/**"
+        ]
+      }
     }
   },
   "bundle": {
     "active": true,
     "targets": "all",
+    "externalBin": [
+      "binaries/yt-dlp",
+      "binaries/deno"
+    ],
+    "resources": [
+      "resources/whisper/*"
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

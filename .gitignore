@@ -11,6 +11,10 @@ build/
 
 # Tauri / Rust
 src-tauri/target/
+# Sidecars: se bajan con `bun run sidecar:fetch`, no se commitean (~115 MB)
+src-tauri/binaries/
+# whisper-cli + sus DLLs de ggml, mismo script (~8 MB)
+src-tauri/resources/whisper/
 
 # Tests
 coverage/
