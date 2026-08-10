@@ -21,6 +21,37 @@ export interface LyricNote {
   to: number;
   /** `null` cuando en ese tramo no hubo pitch claro (consonantes, respiración). */
   note: DetectedNote | null;
+  /** Índice del verso de la letra al que pertenece. La letra tiene renglones. */
+  line: number;
+  /**
+   * La nota no se midió en esta palabra: se dedujo porque quedó ENCERRADA entre
+   * dos con la misma nota. Se marca para no hacer pasar por medición algo que
+   * no lo es.
+   */
+  inferred: boolean;
+}
+
+/**
+ * Rellena huecos de nota cuando una palabra queda entre dos que suenan IGUAL.
+ *
+ * Una consonante o una respiración corta el pitch en el medio de una nota
+ * sostenida y deja un `null` que en pantalla es un guión. Si las dos vecinas del
+ * mismo verso comparten nota, esa palabra se cantó en esa nota — es el mismo
+ * criterio de interpolación entre anclas que ya se usa para los tiempos.
+ *
+ * Si las vecinas suenan distinto NO se inventa nada: el guión se queda.
+ */
+export function fillNoteGaps(words: LyricNote[]): LyricNote[] {
+  return words.map((word, i) => {
+    if (word.note) return word;
+    const previous = words[i - 1];
+    const next = words[i + 1];
+    const sameLine = previous?.line === word.line && next?.line === word.line;
+    const sameNote =
+      previous?.note && next?.note && previous.note.label === next.note.label;
+    if (!sameLine || !sameNote) return word;
+    return { ...word, note: previous.note, inferred: true };
+  });
 }
 
 export interface PipelineResult {
@@ -102,10 +133,19 @@ export async function runLyricsPipeline(
       "No encontré la letra de ese tema con una duración parecida. Revisá artista y título.",
     );
   }
-  const lyrics = parseLrc(found.syncedLyrics)
-    .flatMap((line) => line.text.split(/\s+/))
-    .filter(Boolean);
-  if (lyrics.length === 0) throw new Error("La letra vino vacía.");
+  // Se aplana para alinear —Needleman-Wunsch trabaja sobre una secuencia— pero
+  // se conserva a qué verso pertenece cada palabra. Perder eso deja la letra
+  // como un chorro de palabras sin renglones.
+  const flat: { text: string; line: number }[] = [];
+  let lineIndex = 0;
+  for (const line of parseLrc(found.syncedLyrics)) {
+    const wordsOfLine = line.text.split(/\s+/).filter(Boolean);
+    if (wordsOfLine.length === 0) continue; // interludio: no aporta renglón
+    for (const text of wordsOfLine) flat.push({ text, line: lineIndex });
+    lineIndex++;
+  }
+  if (flat.length === 0) throw new Error("La letra vino vacía.");
+  const lyrics = flat.map((w) => w.text);
 
   stage("alineado");
   const pairing = matchWords(
@@ -118,10 +158,14 @@ export async function runLyricsPipeline(
     duration,
     bounds: sungBounds(track, duration),
   });
-  const words: LyricNote[] = aligned.map((word) => ({
-    ...word,
-    note: noteInSpan(track, word.from, word.to),
-  }));
+  const words = fillNoteGaps(
+    aligned.map((word, i) => ({
+      ...word,
+      note: noteInSpan(track, word.from, word.to),
+      line: flat[i].line,
+      inferred: false,
+    })),
+  );
 
   return {
     words,

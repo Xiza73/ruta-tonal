@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { runLyricsPipeline, STAGES, type PipelineDeps } from "./lyrics-pipeline";
+import {
+  fillNoteGaps,
+  runLyricsPipeline,
+  STAGES,
+  type LyricNote,
+  type PipelineDeps,
+} from "./lyrics-pipeline";
+import { frequencyToNote } from "./notes";
 
 const SAMPLE_RATE = 44100;
 
@@ -102,5 +109,79 @@ describe("runLyricsPipeline", () => {
         }),
       ),
     ).rejects.toThrow("falló la separación");
+  });
+});
+
+/** Palabra de prueba: `note` por nombre de nota, o `null` para un hueco. */
+function word(text: string, note: "A4" | "C4" | null, line = 0): LyricNote {
+  const HZ = { A4: 440, C4: 261.63 };
+  return {
+    text,
+    from: 0,
+    to: 1,
+    line,
+    inferred: false,
+    note: note ? frequencyToNote(HZ[note], "scientific") : null,
+  };
+}
+
+describe("fillNoteGaps", () => {
+  it("deduce la nota cuando la palabra queda entre dos iguales", () => {
+    // Una consonante corta el pitch en el medio de una nota sostenida.
+    const filled = fillNoteGaps([word("la", "A4"), word("s", null), word("bios", "A4")]);
+    expect(filled[1].note?.label).toBe("A4");
+    expect(filled[1].inferred).toBe(true);
+  });
+
+  it("NO inventa nada si las vecinas suenan distinto", () => {
+    const filled = fillNoteGaps([word("uno", "A4"), word("dos", null), word("tres", "C4")]);
+    expect(filled[1].note).toBeNull();
+    expect(filled[1].inferred).toBe(false);
+  });
+
+  it("no cruza el corte entre versos", () => {
+    // El final de un verso y el arranque del siguiente no son una nota sostenida.
+    const filled = fillNoteGaps([
+      word("fin", "A4", 0),
+      word("hueco", null, 1),
+      word("sigue", "A4", 1),
+    ]);
+    expect(filled[1].note).toBeNull();
+  });
+
+  it("deja intactas las palabras que sí tienen nota medida", () => {
+    const filled = fillNoteGaps([word("con", "A4"), word("nota", "C4")]);
+    expect(filled.map((w) => w.inferred)).toEqual([false, false]);
+  });
+
+  it("no toca los huecos de los extremos, que no tienen dos vecinas", () => {
+    const filled = fillNoteGaps([word("borde", null), word("nota", "A4")]);
+    expect(filled[0].note).toBeNull();
+  });
+});
+
+describe("runLyricsPipeline · versos", () => {
+  it("conserva a qué verso pertenece cada palabra", async () => {
+    const result = await runLyricsPipeline(
+      { url: "u", artist: "a", track: "t" },
+      deps({
+        findLyrics: async () => ({
+          syncedLyrics: "[00:00.20]primer verso\n[00:00.60]segundo verso",
+        }),
+      }),
+    );
+    expect(result.words.map((w) => w.line)).toEqual([0, 0, 1, 1]);
+  });
+
+  it("los interludios no gastan un número de verso", async () => {
+    const result = await runLyricsPipeline(
+      { url: "u", artist: "a", track: "t" },
+      deps({
+        findLyrics: async () => ({
+          syncedLyrics: "[00:00.20]canta\n[00:00.40]\n[00:00.60]vuelve",
+        }),
+      }),
+    );
+    expect(result.words.map((w) => w.line)).toEqual([0, 1]);
   });
 });

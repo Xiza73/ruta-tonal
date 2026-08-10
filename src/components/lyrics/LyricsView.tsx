@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { STAGES, type Stage } from "../../lib/lyrics-pipeline";
+import { STAGES, type LyricNote, type Stage } from "../../lib/lyrics-pipeline";
 import { useLyricsStore } from "../../stores/lyrics";
 import { Button } from "../ui/button";
 
@@ -13,6 +13,44 @@ const STAGE_LABEL: Record<Stage, string> = {
 
 /** Las tres primeras son minutos, no segundos. Conviene avisarlo. */
 const SLOW: Stage[] = ["descarga", "separacion", "transcripcion"];
+
+/** Corta la lista plana en los versos de la letra. */
+export function groupIntoLines(words: LyricNote[]): LyricNote[][] {
+  const lines: LyricNote[][] = [];
+  for (const word of words) {
+    if (lines.length === 0 || word.line !== lines[lines.length - 1][0].line) lines.push([]);
+    lines[lines.length - 1].push(word);
+  }
+  return lines;
+}
+
+export interface Run {
+  note: string | null;
+  inferred: boolean;
+  words: LyricNote[];
+}
+
+/**
+ * Agrupa palabras seguidas que comparten nota.
+ *
+ * Repetir "C4 C4 C4" sobre tres palabras seguidas no dice que son tres notas:
+ * es una sola sostenida. Agrupadas se lee lo que pasa de verdad.
+ */
+export function groupIntoRuns(line: LyricNote[]): Run[] {
+  const runs: Run[] = [];
+  for (const word of line) {
+    const label = word.note?.label ?? null;
+    const last = runs[runs.length - 1];
+    if (last && last.note === label && label !== null) {
+      last.words.push(word);
+      // El grupo es "deducido" solo si TODAS lo son; con una medida, se sostiene.
+      last.inferred = last.inferred && word.inferred;
+    } else {
+      runs.push({ note: label, inferred: word.inferred, words: [word] });
+    }
+  }
+  return runs;
+}
 
 function StageList({ current }: { current: Stage }) {
   const currentIndex = STAGES.indexOf(current);
@@ -137,18 +175,40 @@ export function LyricsView() {
             {anchored < 1 && <span className="text-fg-subtle"> (el resto, interpolado)</span>}
           </p>
 
-          <div className="flex flex-wrap gap-x-3 gap-y-4 rounded-lg bg-surface p-4 shadow-card">
-            {words.map((word, i) => (
-              <span key={`${i}-${word.text}`} className="flex flex-col items-center leading-tight">
-                <span
-                  className={
-                    word.note ? "font-mono text-xs text-accent" : "font-mono text-xs text-fg-subtle"
-                  }
-                >
-                  {word.note?.label ?? "—"}
-                </span>
-                <span className="text-fg">{word.text}</span>
-              </span>
+          <div className="flex flex-col gap-3 rounded-lg bg-surface p-5 shadow-card">
+            {groupIntoLines(words).map((line, l) => (
+              <p key={l} className="flex flex-wrap items-end gap-x-2 gap-y-3">
+                {groupIntoRuns(line).map((run, r) => (
+                  <span key={r} className="flex flex-col items-center leading-tight">
+                    <span
+                      className={`font-mono text-xs ${
+                        !run.note
+                          ? "text-fg-subtle"
+                          : run.inferred
+                            ? "text-accent/50"
+                            : "text-accent"
+                      }`}
+                      // Una nota deducida no se midió: se dedujo de las vecinas.
+                      title={run.inferred ? "Deducida de las palabras vecinas" : undefined}
+                    >
+                      {run.note ?? "·"}
+                    </span>
+                    {/* La línea abarca todas las palabras que comparten la nota,
+                        así se ve de un vistazo que es una sola nota sostenida. */}
+                    <span
+                      className={`flex gap-x-2 px-1 ${
+                        run.note ? "border-t border-accent/25" : "border-t border-transparent"
+                      }`}
+                    >
+                      {run.words.map((word, w) => (
+                        <span key={w} className="text-fg">
+                          {word.text}
+                        </span>
+                      ))}
+                    </span>
+                  </span>
+                ))}
+              </p>
             ))}
           </div>
         </section>
