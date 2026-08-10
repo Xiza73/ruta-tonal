@@ -1,3 +1,4 @@
+mod separation;
 mod whisper;
 mod youtube;
 
@@ -7,6 +8,7 @@ pub fn run() {
     .plugin(tauri_plugin_shell::init())
     .invoke_handler(tauri::generate_handler![
       youtube::download_audio,
+      separation::separate_vocals,
       whisper::transcribe_words
     ])
     .setup(|app| {
