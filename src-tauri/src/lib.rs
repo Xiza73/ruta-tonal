@@ -1,4 +1,5 @@
 mod separation;
+mod whisper;
 mod youtube;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -7,7 +8,8 @@ pub fn run() {
     .plugin(tauri_plugin_shell::init())
     .invoke_handler(tauri::generate_handler![
       youtube::download_audio,
-      separation::separate_vocals
+      separation::separate_vocals,
+      whisper::transcribe_words
     ])
     .setup(|app| {
       if cfg!(debug_assertions) {

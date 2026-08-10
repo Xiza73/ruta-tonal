@@ -26,6 +26,10 @@ tauri-plugin-log = "2"
 tauri-plugin-shell = "2"
 url = "2"
 
+# Baja el modelo de whisper (~465 MB) en el primer uso. Ya estaba en el lock vía
+# tauri, así que declararlo explícito no suma compilación.
+reqwest = "0.13.3"
+
 # Separación de voz (HTDemucs sobre ONNX Runtime).
 #
 # default-features = false deja SOLO CPU. Las features por default activan cuda,
