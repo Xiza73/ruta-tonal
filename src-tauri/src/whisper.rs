@@ -19,8 +19,7 @@ use tauri_plugin_shell::ShellExt;
 /// solo 9 únicas, contra 160 palabras y 57 únicas de la letra real. `small` da
 /// 150 y 54, casi clavado. No bajar de acá.
 const MODEL_FILE: &str = "ggml-small.bin";
-const MODEL_URL: &str =
-    "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
+const MODEL_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Word {
@@ -48,7 +47,11 @@ struct CliOffsets {
 
 /// Ruta del binario dentro de los resources empaquetados.
 fn whisper_cli(app: &AppHandle) -> Result<PathBuf, String> {
-    let name = if cfg!(windows) { "whisper-cli.exe" } else { "whisper-cli" };
+    let name = if cfg!(windows) {
+        "whisper-cli.exe"
+    } else {
+        "whisper-cli"
+    };
     let path = app
         .path()
         .resource_dir()
@@ -143,7 +146,7 @@ pub async fn transcribe_words(app: AppHandle, wav_path: String) -> Result<Vec<Wo
             "-l",
             "es",
             "-ml",
-            "1", // un segmento por palabra…
+            "1",    // un segmento por palabra…
             "-sow", // …cortando por palabra y no por token
             "-sns", // suprime tokens de no-habla: reduce las alucinaciones
             // NO se usa -dtw: whisper-cli lo desactiva solo cuando flash

@@ -8,7 +8,11 @@
 /// Últimas líneas útiles de un stream, aplanadas en una sola línea.
 fn tail(raw: &[u8], lines: usize) -> String {
     let text = String::from_utf8_lossy(raw);
-    let useful: Vec<&str> = text.lines().map(str::trim).filter(|l| !l.is_empty()).collect();
+    let useful: Vec<&str> = text
+        .lines()
+        .map(str::trim)
+        .filter(|l| !l.is_empty())
+        .collect();
     useful[useful.len().saturating_sub(lines)..].join(" | ")
 }
 
@@ -28,7 +32,11 @@ pub fn describe_failure(program: &str, code: Option<i32>, stdout: &[u8], stderr:
 
     let detail = {
         let err = tail(stderr, 3);
-        if err.is_empty() { tail(stdout, 3) } else { err }
+        if err.is_empty() {
+            tail(stdout, 3)
+        } else {
+            err
+        }
     };
 
     if detail.is_empty() {

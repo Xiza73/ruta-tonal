@@ -94,6 +94,11 @@ export function LyricsView() {
   const anchored = useLyricsStore((s) => s.anchored);
   const withNote = useLyricsStore((s) => s.withNote);
   const process = useLyricsStore((s) => s.process);
+  const exportDir = useLyricsStore((s) => s.exportDir);
+  const exportedAt = useLyricsStore((s) => s.exportedAt);
+  const exportMarkdown = useLyricsStore((s) => s.exportMarkdown);
+  const pickExportDir = useLyricsStore((s) => s.pickExportDir);
+  const openExportDir = useLyricsStore((s) => s.openExportDir);
 
   const ready = url.trim() && artist.trim() && track.trim() && !running;
 
@@ -155,6 +160,44 @@ export function LyricsView() {
         </Button>
       </form>
 
+      {/* Fuera del bloque de resultados a propósito: abrir la carpeta sirve para
+          ver TODAS las canciones exportadas, no solo la recién procesada. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-lg bg-surface px-4 py-3 shadow-card">
+        <span className="text-xs text-fg-muted">Carpeta de exportación:</span>
+        {exportDir ? (
+          <>
+            <code className="truncate font-mono text-xs text-fg" title={exportDir}>
+              {exportDir}
+            </code>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="ml-auto"
+              onClick={() => void openExportDir()}
+            >
+              Abrir carpeta
+            </Button>
+            <Button type="button" size="sm" variant="ghost" onClick={() => void pickExportDir()}>
+              Cambiar
+            </Button>
+          </>
+        ) : (
+          <>
+            <span className="text-xs text-fg-subtle">sin elegir</span>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="ml-auto"
+              onClick={() => void pickExportDir()}
+            >
+              Elegir carpeta
+            </Button>
+          </>
+        )}
+      </div>
+
       {running && stage && (
         <div className="rounded-lg bg-surface p-4 text-sm shadow-card">
           <StageList current={stage} />
@@ -169,11 +212,23 @@ export function LyricsView() {
 
       {words.length > 0 && (
         <section className="flex flex-col gap-3">
-          <p className="text-xs text-fg-muted">
-            {words.length} palabras · {Math.round(withNote * 100)}% con nota ·{" "}
-            {Math.round(anchored * 100)}% con tiempo medido
-            {anchored < 1 && <span className="text-fg-subtle"> (el resto, interpolado)</span>}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-fg-muted">
+              {words.length} palabras · {Math.round(withNote * 100)}% con nota ·{" "}
+              {Math.round(anchored * 100)}% con tiempo medido
+              {anchored < 1 && <span className="text-fg-subtle"> (el resto, interpolado)</span>}
+            </p>
+
+            <Button type="button" size="sm" onClick={() => void exportMarkdown()}>
+              Exportar .md
+            </Button>
+          </div>
+
+          {exportedAt && (
+            <p className="text-xs text-success" role="status">
+              Guardado en {exportedAt}
+            </p>
+          )}
 
           <div className="flex flex-col gap-3 rounded-lg bg-surface p-5 shadow-card">
             {groupIntoLines(words).map((line, l) => (

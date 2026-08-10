@@ -54,3 +54,5 @@ stem-splitter-core = { version = "1.2", default-features = false }
 # los incluye y `read_audio` aprende a abrirlo — sin escribir un decodificador
 # propio y sin bundlear ffmpeg.
 symphonia = { version = "0.5", features = ["aac", "isomp4"] }
+tauri-plugin-dialog = "2"
+tauri-plugin-opener = "2"
