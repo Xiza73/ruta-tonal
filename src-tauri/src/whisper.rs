@@ -19,10 +19,7 @@ use tauri_plugin_shell::ShellExt;
 /// solo 9 únicas, contra 160 palabras y 57 únicas de la letra real. `small` da
 /// 150 y 54, casi clavado. No bajar de acá.
 const MODEL_FILE: &str = "ggml-small.bin";
-const MODEL_URL: &str =
-    "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
-/// `-dtw` necesita saber a qué modelo corresponden las cabezas de alineamiento.
-const DTW_PRESET: &str = "small";
+const MODEL_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Word {
@@ -50,7 +47,11 @@ struct CliOffsets {
 
 /// Ruta del binario dentro de los resources empaquetados.
 fn whisper_cli(app: &AppHandle) -> Result<PathBuf, String> {
-    let name = if cfg!(windows) { "whisper-cli.exe" } else { "whisper-cli" };
+    let name = if cfg!(windows) {
+        "whisper-cli.exe"
+    } else {
+        "whisper-cli"
+    };
     let path = app
         .path()
         .resource_dir()
@@ -145,11 +146,13 @@ pub async fn transcribe_words(app: AppHandle, wav_path: String) -> Result<Vec<Wo
             "-l",
             "es",
             "-ml",
-            "1", // un segmento por palabra…
+            "1",    // un segmento por palabra…
             "-sow", // …cortando por palabra y no por token
-            "-dtw",
-            DTW_PRESET, // timestamps por DTW, más precisos que la heurística
-            "-sns",     // suprime tokens de no-habla: reduce las alucinaciones
+            "-sns", // suprime tokens de no-habla: reduce las alucinaciones
+            // NO se usa -dtw: whisper-cli lo desactiva solo cuando flash
+            // attention está activa (que es el default), y forzarlo con -nfa
+            // rompe la segmentación por palabra — medido, 32 segmentos de 10s
+            // en vez de 127 palabras.
             "-oj",
             "-of",
             &out_base.to_string_lossy(),
@@ -160,10 +163,11 @@ pub async fn transcribe_words(app: AppHandle, wav_path: String) -> Result<Vec<Wo
         .map_err(|e| format!("No pude ejecutar whisper-cli: {e}"))?;
 
     if !output.status.success() {
-        let err = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
-            "whisper-cli falló: {}",
-            err.lines().last().unwrap_or("sin detalle")
+        return Err(crate::proc::describe_failure(
+            "whisper-cli",
+            output.status.code(),
+            &output.stdout,
+            &output.stderr,
         ));
     }
 

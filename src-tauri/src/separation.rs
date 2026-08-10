@@ -54,12 +54,11 @@ pub async fn separate_vocals(app: AppHandle, path: String) -> Result<String, Str
 
     // split_file es BLOQUEANTE y tarda minutos: fuera del runtime async o le
     // clavamos un worker de tokio todo ese tiempo.
-    let result = tauri::async_runtime::spawn_blocking(move || {
-        split_file(&input.to_string_lossy(), opts)
-    })
-    .await
-    .map_err(|e| format!("La tarea de separación se cayó: {e}"))?
-    .map_err(|e| format!("Falló la separación: {e}"))?;
+    let result =
+        tauri::async_runtime::spawn_blocking(move || split_file(&input.to_string_lossy(), opts))
+            .await
+            .map_err(|e| format!("La tarea de separación se cayó: {e}"))?
+            .map_err(|e| format!("Falló la separación: {e}"))?;
 
     // ponytail: se descartan drums/bass/other. El crate siempre escribe los
     // cuatro stems, no expone un modo de solo-voz.

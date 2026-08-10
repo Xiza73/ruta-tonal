@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { LyricsView } from "./components/lyrics/LyricsView";
 import { Piano } from "./components/piano/Piano";
 import { KeyboardConfig } from "./components/piano/KeyboardConfig";
 import { ConfigModeButton } from "./components/piano/ConfigModeButton";
@@ -10,7 +11,32 @@ import { pitchBuffer, TUNER_CAPACITY, useTunerStore } from "./stores/tuner";
 import { useKeyboardProfile, useKeyboardStore } from "./stores/keyboard";
 import { useThemeStore } from "./stores/theme";
 
+type View = "entrenador" | "letras";
+
+/** Las dos secciones son independientes; alcanza con alternar, sin router. */
+function ViewSwitch({ view, onChange }: { view: View; onChange: (view: View) => void }) {
+  return (
+    <div className="flex rounded-md bg-elevated p-0.5" role="tablist">
+      {(["entrenador", "letras"] as const).map((option) => (
+        <button
+          key={option}
+          type="button"
+          role="tab"
+          aria-selected={view === option}
+          onClick={() => onChange(option)}
+          className={`rounded px-3 py-1 text-sm font-medium capitalize transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+            view === option ? "bg-accent text-accent-fg" : "text-fg-muted hover:text-fg"
+          }`}
+        >
+          {option}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function App() {
+  const [view, setView] = useState<View>("entrenador");
   const profile = useKeyboardProfile();
   const notation = useKeyboardStore((s) => s.notation);
   const listening = useTunerStore((s) => s.listening);
@@ -23,6 +49,20 @@ export default function App() {
   useEffect(() => {
     document.documentElement.classList.toggle("light", theme === "light");
   }, [theme]);
+
+  if (view === "letras") {
+    return (
+      <main className="flex h-screen flex-col gap-4 overflow-hidden bg-base p-4">
+        <div className="flex shrink-0 items-center justify-center gap-5">
+          <ViewSwitch view={view} onChange={setView} />
+          <ThemeToggle />
+        </div>
+        <section className="min-h-0 flex-1">
+          <LyricsView />
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="flex h-screen flex-col gap-4 overflow-hidden bg-base p-4">
@@ -44,6 +84,7 @@ export default function App() {
       {/* Inferior: barra de controles + teclado (alto fijo, compacto). */}
       <section className="flex shrink-0 flex-col gap-4">
         <div className="flex flex-wrap items-center justify-center gap-5">
+          <ViewSwitch view={view} onChange={setView} />
           <MicButton />
           <ProfileControls />
           <KeyboardConfig />
