@@ -17,11 +17,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest # .dmg universal (Intel + Apple Silicon)
-            args: --target universal-apple-darwin
-            # Tauri exige que los sidecars sean universales cuando el target lo
-            # es: no se pueden mezclar arquitecturas.
-            sidecarTriple: universal-apple-darwin
+          # Solo Apple Silicon. NO universal: `ort` (los bindings de ONNX
+          # Runtime que arrastra la separacion de voz) publica un xcframework
+          # con slices arm64 pero NO x86_64, asi que la mitad Intel no compila
+          # y voltea el job entero. Las Mac Intel quedan sin soporte.
+          - platform: macos-latest # .dmg para Apple Silicon
+            args: --target aarch64-apple-darwin
+            sidecarTriple: aarch64-apple-darwin
           - platform: windows-latest # .msi (WiX) + .exe (NSIS)
             args: ""
             sidecarTriple: x86_64-pc-windows-msvc
@@ -32,7 +34,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: Swatinem/rust-cache@v2
@@ -57,7 +59,7 @@ jobs:
         with:
           tagName: v__VERSION__ # __VERSION__ ← version de tauri.conf.json
           releaseName: "Ruta Tonal v__VERSION__"
-          releaseBody: "Instaladores offline para Windows (.msi / .exe) y macOS (.dmg universal). Descargá el que corresponda a tu sistema desde los assets de abajo."
+          releaseBody: "Instaladores para Windows (.msi / .exe) y macOS Apple Silicon (.dmg). Descargá el que corresponda a tu sistema desde los assets de abajo."
           releaseDraft: true # queda en borrador para que lo revises y publiques
           prerelease: false
           args: ${{ matrix.args }}
