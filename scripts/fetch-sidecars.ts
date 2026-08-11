@@ -11,7 +11,7 @@
  * binarios sueltos. Como se resuelve por `resource_dir`, las DLLs quedan en la
  * misma carpeta y el linker las encuentra sin tocar el PATH.
  *
- * No se commitean: ~18 MB, ~97 MB y ~8 MB, y se actualizan seguido.
+ * No se commitean (~124 MB en total) y se actualizan seguido.
  *
  *   bun run sidecar:fetch                                  # triple del host
  *   bun run sidecar:fetch --triple universal-apple-darwin  # release de macOS
@@ -24,7 +24,6 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
-  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -35,9 +34,9 @@ const YT_DLP = "https://github.com/yt-dlp/yt-dlp/releases/latest/download";
 const DENO = "https://github.com/denoland/deno/releases/latest/download";
 const WHISPER = "https://github.com/ggml-org/whisper.cpp/releases/latest/download";
 
-/** Target de macOS que fusiona ambas arquitecturas. */
+/** Target de macOS que Tauri compila para las dos arquitecturas. */
 const UNIVERSAL = "universal-apple-darwin";
-/** Arquitecturas que hay que unir con lipo para armar el universal. */
+/** Las dos arquitecturas que componen un build universal de macOS. */
 const UNIVERSAL_PARTS = ["x86_64-apple-darwin", "aarch64-apple-darwin"];
 
 function hostTriple(): string {
@@ -56,7 +55,11 @@ const triple = flag >= 0 ? argv[flag + 1] : hostTriple();
 if (!triple) throw new Error("--triple necesita un valor");
 const force = argv.includes("--force");
 
+// El triple DESTINO decide la extension; el SO donde corre el script decide que
+// herramienta de descompresion usar. Casi siempre coinciden, pero separarlos
+// permite pedir los binarios de otra plataforma para inspeccionarlos.
 const isWindows = triple.includes("windows");
+const isWindowsHost = process.platform === "win32";
 const ext = isWindows ? ".exe" : "";
 const dir = join(import.meta.dir, "..", "src-tauri", "binaries");
 /** whisper va como resource (varios archivos), no como externalBin. */
@@ -74,7 +77,7 @@ async function download(url: string, dest: string): Promise<void> {
  */
 function unzip(zip: string, into: string): void {
   mkdirSync(into, { recursive: true });
-  if (isWindows) {
+  if (isWindowsHost) {
     execFileSync("powershell", [
       "-NoProfile",
       "-Command",
@@ -97,42 +100,55 @@ async function denoBinary(archTriple: string, workDir: string): Promise<string> 
   return join(out, inner);
 }
 
-async function fetchYtDlp(): Promise<void> {
-  const dest = join(dir, `yt-dlp-${triple}${ext}`);
-  if (existsSync(dest) && !force) return console.log("yt-dlp  ya existe");
+/**
+ * Triples para los que hay que emitir un binario.
+ *
+ * Con `universal-apple-darwin` son DOS. Tauri no busca un sidecar universal:
+ * compila la app por separado para cada arquitectura, y cada sub-build pide el
+ * sidecar CON SU PROPIO TRIPLE (`TAURI_ENV_TARGET_TRIPLE=aarch64-apple-darwin`
+ * busca `yt-dlp-aarch64-apple-darwin`). El lipo de la app lo hace Tauri; el de
+ * los sidecars no hace falta.
+ */
+function outputTriples(): string[] {
+  return triple === UNIVERSAL ? UNIVERSAL_PARTS : [triple];
+}
 
-  // yt-dlp_macos ya viene universal (Intel + Apple Silicon), así que sirve
-  // tal cual para el target universal-apple-darwin.
+async function fetchYtDlp(): Promise<void> {
+  const targets = outputTriples().map((t) => join(dir, `yt-dlp-${t}${ext}`));
+  if (targets.every((t) => existsSync(t)) && !force) return console.log("yt-dlp  ya existe");
+
   let asset: string;
   if (isWindows) asset = "yt-dlp.exe";
   else if (triple.includes("apple")) asset = "yt-dlp_macos";
   else if (triple.includes("linux")) asset = "yt-dlp_linux";
   else throw new Error(`Plataforma no soportada: ${triple}`);
 
-  console.log(`yt-dlp  bajando ${asset}`);
-  await download(`${YT_DLP}/${asset}`, dest);
-  if (!isWindows) chmodSync(dest, 0o755);
+  console.log(`yt-dlp  bajando ${asset}${targets.length > 1 ? " (para ambas arquitecturas)" : ""}`);
+  // yt-dlp_macos ya viene universal, así que el MISMO archivo sirve para las dos
+  // arquitecturas: se baja una vez y se copia con los dos nombres.
+  await download(`${YT_DLP}/${asset}`, targets[0]);
+  for (const extra of targets.slice(1)) copyFileSync(targets[0], extra);
+  if (!isWindows) for (const t of targets) chmodSync(t, 0o755);
 }
 
 async function fetchDeno(): Promise<void> {
-  const dest = join(dir, `deno-${triple}${ext}`);
-  if (existsSync(dest) && !force) return console.log("deno    ya existe");
+  const targets = outputTriples();
+  if (targets.every((t) => existsSync(join(dir, `deno-${t}${ext}`))) && !force) {
+    return console.log("deno    ya existe");
+  }
 
   const work = join(tmpdir(), `deno-sidecar-${process.pid}`);
   mkdirSync(work, { recursive: true });
   try {
-    if (triple === UNIVERSAL) {
-      // Tauri exige que el sidecar TAMBIEN sea universal cuando el target lo es;
-      // no se puede mezclar. deno publica por arquitectura, asi que las unimos.
-      console.log(`deno    bajando ${UNIVERSAL_PARTS.join(" + ")} y uniendo con lipo`);
-      const parts: string[] = [];
-      for (const part of UNIVERSAL_PARTS) parts.push(await denoBinary(part, work));
-      execFileSync("lipo", ["-create", "-output", dest, ...parts]);
-    } else {
-      console.log(`deno    bajando deno-${triple}.zip`);
-      renameSync(await denoBinary(triple, work), dest);
+    for (const target of targets) {
+      console.log(`deno    bajando deno-${target}.zip`);
+      const dest = join(dir, `deno-${target}${ext}`);
+      // copyFileSync y NO renameSync: en el runner el temp del sistema y el
+      // repo están en discos distintos (C: y D:) y renombrar entre volúmenes
+      // falla con EXDEV.
+      copyFileSync(await denoBinary(target, work), dest);
+      if (!isWindows) chmodSync(dest, 0o755);
     }
-    if (!isWindows) chmodSync(dest, 0o755);
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -162,8 +178,6 @@ async function fetchWhisper(): Promise<void> {
       const zip = join(work, "w.zip");
       await download(`${WHISPER}/whisper-bin-x64.zip`, zip);
       unzip(zip, work);
-      // El zip trae media docena de binarios de ejemplo; solo queremos el CLI y
-      // las DLLs de ggml, que se despachan según el CPU en runtime.
       // El zip trae media docena de binarios de ejemplo, pero se copian TODAS
       // las bibliotecas y no una lista blanca: filtrar por `ggml*.dll` dejaba
       // afuera whisper.dll, y sin ella el ejecutable ni arranca (exit 127 sin
