@@ -89,6 +89,10 @@ bun run typecheck      # tsc --noEmit
 > no se commitean; el script baja los de tu plataforma. En macOS compila
 > `whisper-cli` desde el fuente porque upstream no publica CLI para macOS, así
 > que ahí hace falta `cmake`.
+>
+> **El release de macOS es solo Apple Silicon.** `ort` publica un xcframework
+> con slices arm64 pero NO x86_64, así que un build universal no linkea. Las
+> Mac Intel no están soportadas.
 
 Tests de Rust:
 

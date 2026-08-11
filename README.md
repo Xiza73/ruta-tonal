@@ -62,6 +62,10 @@ bun run tauri build    # release desktop bundle
 > platform. On macOS it compiles `whisper-cli` from source (upstream ships no
 > macOS CLI), so `cmake` must be installed there.
 
+> **macOS releases are Apple Silicon only.** `ort` — the ONNX Runtime bindings
+> behind vocal separation — ships an xcframework with arm64 slices but no
+> x86_64, so a universal build cannot link. Intel Macs are not supported.
+
 ## Scripts
 
 ```bash

@@ -13,9 +13,9 @@
  *
  * No se commitean (~124 MB en total) y se actualizan seguido.
  *
- *   bun run sidecar:fetch                                  # triple del host
- *   bun run sidecar:fetch --triple universal-apple-darwin  # release de macOS
- *   bun run sidecar:fetch --force                          # rebajar si ya existen
+ *   bun run sidecar:fetch                                # triple del host
+ *   bun run sidecar:fetch --triple aarch64-apple-darwin  # otro target
+ *   bun run sidecar:fetch --force                        # rebajar si ya existen
  */
 import { execFileSync } from "node:child_process";
 import {
@@ -34,10 +34,10 @@ const YT_DLP = "https://github.com/yt-dlp/yt-dlp/releases/latest/download";
 const DENO = "https://github.com/denoland/deno/releases/latest/download";
 const WHISPER = "https://github.com/ggml-org/whisper.cpp/releases/latest/download";
 
-/** Target de macOS que Tauri compila para las dos arquitecturas. */
-const UNIVERSAL = "universal-apple-darwin";
-/** Las dos arquitecturas que componen un build universal de macOS. */
-const UNIVERSAL_PARTS = ["x86_64-apple-darwin", "aarch64-apple-darwin"];
+// NO hay soporte para `universal-apple-darwin`, y no es un descuido: `ort`
+// (los bindings de ONNX Runtime que arrastra la separacion de voz) publica un
+// xcframework con slices arm64 pero NO x86_64, asi que la mitad Intel del build
+// universal no compila. El release de macOS es solo Apple Silicon.
 
 function hostTriple(): string {
   const host = execFileSync("rustc", ["-vV"], { encoding: "utf8" })
@@ -100,22 +100,11 @@ async function denoBinary(archTriple: string, workDir: string): Promise<string> 
   return join(out, inner);
 }
 
-/**
- * Triples para los que hay que emitir un binario.
- *
- * Con `universal-apple-darwin` son DOS. Tauri no busca un sidecar universal:
- * compila la app por separado para cada arquitectura, y cada sub-build pide el
- * sidecar CON SU PROPIO TRIPLE (`TAURI_ENV_TARGET_TRIPLE=aarch64-apple-darwin`
- * busca `yt-dlp-aarch64-apple-darwin`). El lipo de la app lo hace Tauri; el de
- * los sidecars no hace falta.
- */
-function outputTriples(): string[] {
-  return triple === UNIVERSAL ? UNIVERSAL_PARTS : [triple];
-}
-
 async function fetchYtDlp(): Promise<void> {
-  const targets = outputTriples().map((t) => join(dir, `yt-dlp-${t}${ext}`));
-  if (targets.every((t) => existsSync(t)) && !force) return console.log("yt-dlp  ya existe");
+  // Un archivo por triple: Tauri busca el sidecar con el triple EXACTO del
+  // build (`TAURI_ENV_TARGET_TRIPLE`), no uno generico.
+  const dest = join(dir, `yt-dlp-${triple}${ext}`);
+  if (existsSync(dest) && !force) return console.log("yt-dlp  ya existe");
 
   let asset: string;
   if (isWindows) asset = "yt-dlp.exe";
@@ -123,32 +112,24 @@ async function fetchYtDlp(): Promise<void> {
   else if (triple.includes("linux")) asset = "yt-dlp_linux";
   else throw new Error(`Plataforma no soportada: ${triple}`);
 
-  console.log(`yt-dlp  bajando ${asset}${targets.length > 1 ? " (para ambas arquitecturas)" : ""}`);
-  // yt-dlp_macos ya viene universal, así que el MISMO archivo sirve para las dos
-  // arquitecturas: se baja una vez y se copia con los dos nombres.
-  await download(`${YT_DLP}/${asset}`, targets[0]);
-  for (const extra of targets.slice(1)) copyFileSync(targets[0], extra);
-  if (!isWindows) for (const t of targets) chmodSync(t, 0o755);
+  console.log(`yt-dlp  bajando ${asset}`);
+  await download(`${YT_DLP}/${asset}`, dest);
+  if (!isWindows) chmodSync(dest, 0o755);
 }
 
 async function fetchDeno(): Promise<void> {
-  const targets = outputTriples();
-  if (targets.every((t) => existsSync(join(dir, `deno-${t}${ext}`))) && !force) {
-    return console.log("deno    ya existe");
-  }
+  const dest = join(dir, `deno-${triple}${ext}`);
+  if (existsSync(dest) && !force) return console.log("deno    ya existe");
 
   const work = join(tmpdir(), `deno-sidecar-${process.pid}`);
   mkdirSync(work, { recursive: true });
   try {
-    for (const target of targets) {
-      console.log(`deno    bajando deno-${target}.zip`);
-      const dest = join(dir, `deno-${target}${ext}`);
-      // copyFileSync y NO renameSync: en el runner el temp del sistema y el
-      // repo están en discos distintos (C: y D:) y renombrar entre volúmenes
-      // falla con EXDEV.
-      copyFileSync(await denoBinary(target, work), dest);
-      if (!isWindows) chmodSync(dest, 0o755);
-    }
+    console.log(`deno    bajando deno-${triple}.zip`);
+    // copyFileSync y NO renameSync: en el runner el temp del sistema y el repo
+    // estan en discos distintos (C: y D:) y renombrar entre volumenes falla
+    // con EXDEV.
+    copyFileSync(await denoBinary(triple, work), dest);
+    if (!isWindows) chmodSync(dest, 0o755);
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
@@ -206,7 +187,7 @@ async function fetchWhisper(): Promise<void> {
       chmodSync(join(out, "whisper-cli"), 0o755);
     } else if (triple.includes("apple")) {
       // No hay binario publicado para macOS: se compila.
-      const arches = triple === UNIVERSAL ? "x86_64;arm64" : triple.includes("aarch64") ? "arm64" : "x86_64";
+      const arches = triple.includes("aarch64") ? "arm64" : "x86_64";
       console.log(`whisper compilando desde el fuente (${arches}) — necesita cmake`);
       execFileSync("git", ["clone", "--depth", "1", "https://github.com/ggml-org/whisper.cpp", work + "/src"], { stdio: "inherit" });
       execFileSync("cmake", ["-B", `${work}/build`, "-S", `${work}/src`,
