@@ -1,16 +1,25 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SelectPortalContainer } from "@/components/ui/select";
 import { ConfigModeButton } from "./piano/ConfigModeButton";
 import { KeyboardConfig } from "./piano/KeyboardConfig";
 import { SaveProfileButton } from "./piano/ProfileControls";
 import { ThemeToggle } from "./ThemeToggle";
 import { MicSelect } from "./tuner/MicSelect";
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <section className="flex flex-col gap-2 border-t border-border pt-4 first:border-0 first:pt-0">
-      <h3 className="text-xs font-semibold tracking-wide text-fg-muted uppercase">{title}</h3>
+      <h3 className="text-xs font-semibold tracking-wide text-fg-muted uppercase">
+        {title}
+      </h3>
       {children}
     </section>
   );
@@ -29,14 +38,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
  */
 export function SettingsDialog() {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDialogElement>(null);
+  const [dialog, setDialog] = useState<HTMLDialogElement | null>(null);
 
   useEffect(() => {
-    const dialog = ref.current;
     if (!dialog) return;
     if (open && !dialog.open) dialog.showModal();
     if (!open && dialog.open) dialog.close();
-  }, [open]);
+  }, [open, dialog]);
 
   return (
     <>
@@ -51,40 +59,42 @@ export function SettingsDialog() {
       </Button>
 
       <dialog
-        ref={ref}
+        ref={setDialog}
         aria-label="Configuración"
         onClose={() => setOpen(false)}
         className="m-auto w-full max-w-md rounded-xl border border-border bg-surface p-0 text-fg shadow-raised backdrop:bg-black/60"
       >
-        <div className="flex flex-col gap-4 p-5">
-          <div className="flex items-center justify-between">
-            {/* OJO: `text-base` acá NO es un tamaño. El tema define `--base`
+        <SelectPortalContainer container={dialog}>
+          <div className="flex flex-col gap-4 p-5">
+            <div className="flex items-center justify-between">
+              {/* OJO: `text-base` acá NO es un tamaño. El tema define `--base`
                 (el fondo casi negro), así que Tailwind genera `text-base` como
                 COLOR y pinta el texto del color del fondo. */}
-            <h2 className="text-lg font-semibold text-fg">Configuración</h2>
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              Cerrar
-            </Button>
-          </div>
-
-          <Section title="Micrófono">
-            <MicSelect />
-          </Section>
-
-          <Section title="Teclado">
-            <KeyboardConfig />
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Configurar teclas necesita el teclado a la vista para poder
-                  clickearlo, asi que activarlo cierra el panel. */}
-              <ConfigModeButton onEnter={() => setOpen(false)} />
-              <SaveProfileButton />
+              <h2 className="text-lg font-semibold text-fg">Configuración</h2>
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                Cerrar
+              </Button>
             </div>
-          </Section>
 
-          <Section title="Apariencia">
-            <ThemeToggle />
-          </Section>
-        </div>
+            <Section title="Micrófono">
+              <MicSelect />
+            </Section>
+
+            <Section title="Teclado">
+              <KeyboardConfig />
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Configurar teclas necesita el teclado a la vista para poder
+                  clickearlo, asi que activarlo cierra el panel. */}
+                <ConfigModeButton onEnter={() => setOpen(false)} />
+                <SaveProfileButton />
+              </div>
+            </Section>
+
+            <Section title="Apariencia">
+              <ThemeToggle />
+            </Section>
+          </div>
+        </SelectPortalContainer>
       </dialog>
     </>
   );

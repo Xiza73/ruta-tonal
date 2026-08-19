@@ -50,3 +50,18 @@ test("el panel de configuración expone lo que se sacó de la barra", async () =
   expect(screen.getByRole("combobox", { name: "Micrófono" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Configurar teclas" })).toBeInTheDocument();
 });
+
+test("los desplegables del panel se abren dentro del modal y no detrás", async () => {
+  // Un <dialog> abierto con showModal vive en el TOP LAYER. Radix portea el
+  // desplegable a document.body por default, y desde ahí NADA puede taparlo:
+  // el z-index no compite contra el top layer. Quedaba dibujado detrás.
+  const user = userEvent.setup();
+  render(<App />);
+
+  await user.click(screen.getByRole("button", { name: "Configuración" }));
+  await user.click(screen.getByRole("combobox", { name: "Tipo de sonido" }));
+
+  const dialog = document.querySelector("dialog")!;
+  const option = await screen.findByRole("option", { name: "Triangular" });
+  expect(dialog.contains(option)).toBe(true);
+});
