@@ -48,6 +48,8 @@ export function readingToNote(
 export interface PitchDetectorOptions extends PitchGateOptions {
   /** Llamado en cada frame con la nota detectada (o null si no hay). */
   onReading: (note: DetectedNote | null) => void;
+  /** Micrófono a usar. Sin esto, el que elija el sistema. */
+  deviceId?: string;
 }
 
 export interface MicPitchDetector {
@@ -74,6 +76,9 @@ export function createPitchDetector(options: PitchDetectorOptions): MicPitchDete
         echoCancellation: false,
         noiseSuppression: false,
         autoGainControl: false,
+        // `exact` a propósito: si el micrófono elegido no está, es mejor fallar
+        // y avisar que grabar en silencio desde otro que el usuario no eligió.
+        ...(options.deviceId ? { deviceId: { exact: options.deviceId } } : {}),
       },
     });
     const ctx = getAudioContext(); // compartido con el synth

@@ -6,6 +6,7 @@ import { ConfigModeButton } from "./components/piano/ConfigModeButton";
 import { ProfileControls } from "./components/piano/ProfileControls";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { MicButton } from "./components/tuner/MicButton";
+import { MicSelect } from "./components/tuner/MicSelect";
 import { PitchGraph } from "./components/tuner/PitchGraph";
 import { pitchBuffer, TUNER_CAPACITY, useTunerStore } from "./stores/tuner";
 import { useKeyboardProfile, useKeyboardStore } from "./stores/keyboard";
@@ -86,6 +87,7 @@ export default function App() {
         <div className="flex flex-wrap items-center justify-center gap-5">
           <ViewSwitch view={view} onChange={setView} />
           <MicButton />
+          <MicSelect />
           <ProfileControls />
           <KeyboardConfig />
           <ConfigModeButton />
