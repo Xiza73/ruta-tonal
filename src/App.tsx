@@ -43,6 +43,7 @@ export default function App() {
   const error = useTunerStore((s) => s.error);
   const configMode = useKeyboardStore((s) => s.configMode);
   const resetKeyMap = useKeyboardStore((s) => s.resetKeyMap);
+  const setConfigMode = useKeyboardStore((s) => s.setConfigMode);
   const theme = useThemeStore((s) => s.theme);
 
   useEffect(() => {
@@ -89,15 +90,25 @@ export default function App() {
           <SettingsDialog />
         </div>
         {error && <p className="text-center text-sm text-danger">{error}</p>}
+        {/* Barra del modo de configurar teclas. Se sale DESDE ACÁ, que es donde
+            estás trabajando: mandar a reabrir el panel para apagar el modo es
+            hacerte volver sobre tus pasos. */}
         {configMode && (
-          <div className="flex items-center justify-center gap-3 text-xs text-fg-muted">
+          <div className="flex flex-wrap items-center justify-center gap-3 rounded-md border border-accent/40 bg-elevated px-3 py-2 text-xs text-fg-muted">
             <span>Clic en una tecla y apretá una tecla física para asignarla.</span>
             <button
               type="button"
               onClick={resetKeyMap}
-              className="rounded-md bg-elevated px-2 py-1 font-medium hover:bg-border hover:text-fg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+              className="rounded-md bg-surface px-2 py-1 font-medium hover:bg-border hover:text-fg focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
             >
               Restablecer
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfigMode(false)}
+              className="rounded-md bg-accent px-3 py-1 font-medium text-accent-fg hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
+            >
+              Listo
             </button>
           </div>
         )}

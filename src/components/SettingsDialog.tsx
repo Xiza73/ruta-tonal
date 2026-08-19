@@ -58,7 +58,10 @@ export function SettingsDialog() {
       >
         <div className="flex flex-col gap-4 p-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Configuración</h2>
+            {/* OJO: `text-base` acá NO es un tamaño. El tema define `--base`
+                (el fondo casi negro), así que Tailwind genera `text-base` como
+                COLOR y pinta el texto del color del fondo. */}
+            <h2 className="text-lg font-semibold text-fg">Configuración</h2>
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
               Cerrar
             </Button>

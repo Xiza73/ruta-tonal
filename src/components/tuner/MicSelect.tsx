@@ -36,8 +36,9 @@ export function MicSelect() {
       value={deviceId || SYSTEM}
       onValueChange={(value) => void selectDevice(value === SYSTEM ? null : value)}
     >
-      <SelectTrigger aria-label="Micrófono">
-        <SelectValue />
+      {/* w-full + min-w-0: un nombre largo desbordaba el panel y le metia scroll horizontal. */}
+      <SelectTrigger aria-label="Micrófono" className="w-full min-w-0">
+        <SelectValue className="truncate" />
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={SYSTEM}>Micrófono del sistema</SelectItem>

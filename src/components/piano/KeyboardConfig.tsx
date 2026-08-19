@@ -36,7 +36,7 @@ export function KeyboardConfig() {
   const setSoundType = useKeyboardStore((s) => s.setSoundType);
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3">
+    <div className="flex flex-wrap items-center justify-start gap-2">
       {/* Notación (los valores se explican solos) */}
       <div className="flex gap-1">
         <Button

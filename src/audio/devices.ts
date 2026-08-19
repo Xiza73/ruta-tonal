@@ -15,6 +15,26 @@ export interface Microphone {
 }
 
 /**
+ * Deja el nombre del dispositivo en algo legible.
+ *
+ * Windows entrega cosas como
+ * `Communications - Microphone (Blue Snowball ) (0d8c:0005)`: un prefijo de rol,
+ * el nombre real, y el id de hardware. Solo el del medio le dice algo a una
+ * persona, y el resto desborda el selector.
+ */
+export function cleanDeviceLabel(raw: string): string {
+  return (
+    raw
+      // Prefijos de rol que agrega Windows.
+      .replace(/^(Communications|Default)\s*-\s*/i, "")
+      // Id de hardware al final: `(0d8c:0005)`.
+      .replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)\s*$/i, "")
+      .replace(/\s+/g, " ")
+      .trim() || raw.trim()
+  );
+}
+
+/**
  * Micrófonos conectados. Vacío si el browser no expone la API o si todavía no
  * hay permiso.
  *
@@ -32,7 +52,7 @@ export async function listMicrophones(): Promise<Microphone[]> {
     .map((device, i) => ({
       deviceId: device.deviceId,
       // Con id válido la etiqueta casi siempre viene; el número es una red.
-      label: device.label || `Micrófono ${i + 1}`,
+      label: cleanDeviceLabel(device.label) || `Micrófono ${i + 1}`,
     }));
 }
 

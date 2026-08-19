@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { listMicrophones, resolveDeviceId, type Microphone } from "./devices";
+import { cleanDeviceLabel, listMicrophones, resolveDeviceId, type Microphone } from "./devices";
 
 const devices: Microphone[] = [
   { deviceId: "abc", label: "Webcam" },
@@ -63,5 +63,26 @@ describe("listMicrophones", () => {
   it("no explota si el browser no expone la API", async () => {
     stubDevices(null);
     expect(await listMicrophones()).toEqual([]);
+  });
+});
+
+describe("cleanDeviceLabel", () => {
+  it("saca el prefijo de rol y el id de hardware que agrega Windows", () => {
+    expect(cleanDeviceLabel("Communications - Microphone (Blue Snowball ) (0d8c:0005)")).toBe(
+      "Microphone (Blue Snowball )",
+    );
+  });
+
+  it("saca también el prefijo Default", () => {
+    expect(cleanDeviceLabel("Default - Micrófono (Realtek)")).toBe("Micrófono (Realtek)");
+  });
+
+  it("deja intacto un nombre que ya es legible", () => {
+    expect(cleanDeviceLabel("MacBook Pro Microphone")).toBe("MacBook Pro Microphone");
+  });
+
+  it("no devuelve vacío si el nombre era solo prefijo", () => {
+    // Preferible mostrar algo raro antes que una opción sin texto.
+    expect(cleanDeviceLabel("Communications - ")).toBe("Communications -");
   });
 });
