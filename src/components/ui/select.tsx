@@ -1,4 +1,5 @@
 import * as React from "react";
+import { createContext, useContext } from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -7,7 +8,9 @@ function Select(props: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
 }
 
-function SelectValue(props: React.ComponentProps<typeof SelectPrimitive.Value>) {
+function SelectValue(
+  props: React.ComponentProps<typeof SelectPrimitive.Value>,
+) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
@@ -33,14 +36,40 @@ function SelectTrigger({
   );
 }
 
+/**
+ * Donde portear el desplegable.
+ *
+ * Por default va a `document.body`, que alcanza casi siempre. NO alcanza dentro
+ * de un `<dialog>` abierto con `showModal()`: ese vive en el TOP LAYER y nada
+ * de `body` puede taparlo, por mas z-index que se le ponga — el desplegable
+ * queda dibujado detras del modal. Poniendo el propio dialog como contenedor,
+ * el desplegable queda adentro y comparte su capa.
+ */
+const PortalContainerContext = createContext<HTMLElement | null>(null);
+
+export function SelectPortalContainer({
+  container,
+  children,
+}: {
+  container: HTMLElement | null;
+  children: React.ReactNode;
+}) {
+  return (
+    <PortalContainerContext.Provider value={container}>
+      {children}
+    </PortalContainerContext.Provider>
+  );
+}
+
 function SelectContent({
   className,
   children,
   position = "popper",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  const container = useContext(PortalContainerContext);
   return (
-    <SelectPrimitive.Portal>
+    <SelectPrimitive.Portal container={container ?? undefined}>
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
@@ -118,10 +147,4 @@ function SelectScrollDownButton(
   );
 }
 
-export {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-};
+export { Select, SelectContent, SelectItem, SelectTrigger, SelectValue };
