@@ -58,7 +58,46 @@ function SaveProfileDialog({
   );
 }
 
-/** Selector de perfiles guardados + guardar/eliminar. */
+/**
+ * Boton para guardar la configuracion actual como perfil.
+ *
+ * Vive aparte del selector porque va en el panel de configuracion: aparece
+ * cuando lo que tenes en pantalla NO coincide con ningun perfil, o sea justo
+ * despues de tocar las opciones que estan en ese mismo panel.
+ */
+export function SaveProfileButton() {
+  const profiles = useKeyboardStore((s) => s.profiles);
+  const notation = useKeyboardStore((s) => s.notation);
+  const octaves = useKeyboardStore((s) => s.octaves);
+  const startMidi = useKeyboardStore((s) => s.startMidi);
+  const soundType = useKeyboardStore((s) => s.soundType);
+  const customKeyMap = useKeyboardStore((s) => s.customKeyMap);
+  const saveProfile = useKeyboardStore((s) => s.saveProfile);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const snapshot = { notation, octaves, startMidi, soundType, customKeyMap };
+  if (profiles.some((p) => configMatchesProfile(snapshot, p))) return null;
+
+  return (
+    <>
+      <Button size="sm" onClick={() => setDialogOpen(true)}>
+        Guardar como perfil
+      </Button>
+      {dialogOpen && (
+        <SaveProfileDialog
+          onClose={() => setDialogOpen(false)}
+          onSave={(name) => {
+            saveProfile(name);
+            setDialogOpen(false);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+
+/** Selector de perfiles guardados, con el borrar del que este activo. */
 export function ProfileControls() {
   const profiles = useKeyboardStore((s) => s.profiles);
   const notation = useKeyboardStore((s) => s.notation);
@@ -66,11 +105,8 @@ export function ProfileControls() {
   const startMidi = useKeyboardStore((s) => s.startMidi);
   const soundType = useKeyboardStore((s) => s.soundType);
   const customKeyMap = useKeyboardStore((s) => s.customKeyMap);
-  const configMode = useKeyboardStore((s) => s.configMode);
   const loadProfile = useKeyboardStore((s) => s.loadProfile);
-  const saveProfile = useKeyboardStore((s) => s.saveProfile);
   const deleteProfile = useKeyboardStore((s) => s.deleteProfile);
-  const [dialogOpen, setDialogOpen] = useState(false);
 
   const snapshot = { notation, octaves, startMidi, soundType, customKeyMap };
   const matching = profiles.find((p) => configMatchesProfile(snapshot, p));
@@ -91,10 +127,6 @@ export function ProfileControls() {
         </SelectContent>
       </Select>
 
-      {!configMode && !matching && (
-        <Button onClick={() => setDialogOpen(true)}>Guardar</Button>
-      )}
-
       {matching && (
         <Button
           variant="ghost"
@@ -105,16 +137,6 @@ export function ProfileControls() {
         >
           <X />
         </Button>
-      )}
-
-      {dialogOpen && (
-        <SaveProfileDialog
-          onClose={() => setDialogOpen(false)}
-          onSave={(name) => {
-            saveProfile(name);
-            setDialogOpen(false);
-          }}
-        />
       )}
     </div>
   );

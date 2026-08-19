@@ -1,8 +1,13 @@
 import { useKeyboardStore } from "../../stores/keyboard";
 import { cn } from "../../lib/cn";
 
-/** Entra/sale del modo configuración de teclas. */
-export function ConfigModeButton() {
+/**
+ * Entra/sale del modo configuración de teclas.
+ *
+ * `onEnter` avisa cuando se ACTIVA, para que quien lo muestre dentro de un
+ * panel pueda cerrarlo: configurar teclas necesita el teclado a la vista.
+ */
+export function ConfigModeButton({ onEnter }: { onEnter?: () => void } = {}) {
   const configMode = useKeyboardStore((s) => s.configMode);
   const setConfigMode = useKeyboardStore((s) => s.setConfigMode);
 
@@ -11,7 +16,11 @@ export function ConfigModeButton() {
       type="button"
       aria-label={configMode ? "Salir de configuración de teclas" : "Configurar teclas"}
       aria-pressed={configMode}
-      onClick={() => setConfigMode(!configMode)}
+      onClick={() => {
+        const next = !configMode;
+        setConfigMode(next);
+        if (next) onEnter?.();
+      }}
       className={cn(
         "flex size-9 items-center justify-center rounded-md transition-colors",
         "focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none",

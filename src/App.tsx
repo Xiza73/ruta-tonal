@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
 import { LyricsView } from "./components/lyrics/LyricsView";
 import { Piano } from "./components/piano/Piano";
-import { KeyboardConfig } from "./components/piano/KeyboardConfig";
-import { ConfigModeButton } from "./components/piano/ConfigModeButton";
 import { ProfileControls } from "./components/piano/ProfileControls";
+import { SettingsDialog } from "./components/SettingsDialog";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { MicButton } from "./components/tuner/MicButton";
-import { MicSelect } from "./components/tuner/MicSelect";
 import { PitchGraph } from "./components/tuner/PitchGraph";
 import { pitchBuffer, TUNER_CAPACITY, useTunerStore } from "./stores/tuner";
 import { useKeyboardProfile, useKeyboardStore } from "./stores/keyboard";
@@ -87,11 +85,8 @@ export default function App() {
         <div className="flex flex-wrap items-center justify-center gap-5">
           <ViewSwitch view={view} onChange={setView} />
           <MicButton />
-          <MicSelect />
           <ProfileControls />
-          <KeyboardConfig />
-          <ConfigModeButton />
-          <ThemeToggle />
+          <SettingsDialog />
         </div>
         {error && <p className="text-center text-sm text-danger">{error}</p>}
         {configMode && (
