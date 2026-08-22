@@ -3,6 +3,7 @@ import { LyricsView } from "./components/lyrics/LyricsView";
 import { Piano } from "./components/piano/Piano";
 import { ProfileControls } from "./components/piano/ProfileControls";
 import { SettingsDialog } from "./components/SettingsDialog";
+import { TimerDialog } from "./components/timer/TimerDialog";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { MicButton } from "./components/tuner/MicButton";
 import { PitchGraph } from "./components/tuner/PitchGraph";
@@ -87,6 +88,7 @@ export default function App() {
           <ViewSwitch view={view} onChange={setView} />
           <MicButton />
           <ProfileControls />
+          <TimerDialog />
           <SettingsDialog />
         </div>
         {error && <p className="text-center text-sm text-danger">{error}</p>}
