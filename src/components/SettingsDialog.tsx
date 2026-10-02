@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { SelectPortalContainer } from "@/components/ui/select";
 import { ConfigModeButton } from "./piano/ConfigModeButton";
 import { KeyboardConfig } from "./piano/KeyboardConfig";
+import { OutputSettings } from "./OutputSettings";
 import { SaveProfileButton } from "./piano/ProfileControls";
 import { ThemeToggle } from "./ThemeToggle";
 import { MicSelect } from "./tuner/MicSelect";
@@ -78,6 +79,10 @@ export function SettingsDialog() {
 
             <Section title="Micrófono">
               <MicSelect />
+            </Section>
+
+            <Section title="Salida">
+              <OutputSettings />
             </Section>
 
             <Section title="Teclado">

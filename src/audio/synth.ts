@@ -7,7 +7,7 @@
  */
 
 import { midiToFrequency } from "../lib/notes";
-import { getAudioContext } from "./context";
+import { getAudioContext, getOutput } from "./context";
 
 /** Rampas cortas para evitar los clicks de arrancar/cortar en seco. */
 const ATTACK_S = 0.005;
@@ -44,7 +44,8 @@ export function createSynth(options: SynthOptions = {}): Synth {
 
   const master = ctx.createGain();
   master.gain.value = MASTER_GAIN;
-  master.connect(ctx.destination);
+  // Con contexto inyectado (tests) no hay gain maestro de la app.
+  master.connect(options.context ? ctx.destination : getOutput());
 
   function play(midi: number): Voice {
     const osc = ctx.createOscillator();
