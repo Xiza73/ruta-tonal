@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanDeviceLabel, listMicrophones, resolveDeviceId, type Microphone } from "./devices";
+import {
+  cleanDeviceLabel,
+  listMicrophones,
+  listSpeakers,
+  resolveDeviceId,
+  type Microphone,
+} from "./devices";
 
 const devices: Microphone[] = [
   { deviceId: "abc", label: "Webcam" },
@@ -63,6 +69,20 @@ describe("listMicrophones", () => {
   it("no explota si el browser no expone la API", async () => {
     stubDevices(null);
     expect(await listMicrophones()).toEqual([]);
+  });
+});
+
+describe("listSpeakers", () => {
+  it("deja solo las salidas y descarta los alias de Chromium", async () => {
+    // "default" y "communications" apuntan a otro dispositivo de la lista: ya
+    // los cubre la opción "del sistema".
+    stubDevices([
+      { kind: "audioinput", deviceId: "mic", label: "Interfaz USB" },
+      { kind: "audiooutput", deviceId: "default", label: "Default - Parlantes" },
+      { kind: "audiooutput", deviceId: "communications", label: "Communications - Parlantes" },
+      { kind: "audiooutput", deviceId: "spk", label: "Parlantes" },
+    ]);
+    expect(await listSpeakers()).toEqual([{ deviceId: "spk", label: "Parlantes" }]);
   });
 });
 

@@ -44,15 +44,27 @@ export function cleanDeviceLabel(raw: string): string {
  * selector roto — mejor lista vacía y solo "el del sistema" hasta que se
  * conceda el permiso.
  */
-export async function listMicrophones(): Promise<Microphone[]> {
+export function listMicrophones(): Promise<Microphone[]> {
+  return listDevices("audioinput", "Micrófono");
+}
+
+/** Salidas de audio (parlantes, auriculares). Mismas rarezas que el micrófono. */
+export function listSpeakers(): Promise<Microphone[]> {
+  return listDevices("audiooutput", "Salida");
+}
+
+async function listDevices(kind: MediaDeviceKind, fallback: string): Promise<Microphone[]> {
   if (!navigator.mediaDevices?.enumerateDevices) return [];
   const devices = await navigator.mediaDevices.enumerateDevices();
   return devices
-    .filter((device) => device.kind === "audioinput" && device.deviceId !== "")
+    .filter((device) => device.kind === kind && device.deviceId !== "")
+    // "default" y "communications" son alias de Chromium a otro dispositivo de
+    // la lista: ya está cubierto por la opción "del sistema".
+    .filter((device) => device.deviceId !== "default" && device.deviceId !== "communications")
     .map((device, i) => ({
       deviceId: device.deviceId,
       // Con id válido la etiqueta casi siempre viene; el número es una red.
-      label: cleanDeviceLabel(device.label) || `Micrófono ${i + 1}`,
+      label: cleanDeviceLabel(device.label) || `${fallback} ${i + 1}`,
     }));
 }
 
