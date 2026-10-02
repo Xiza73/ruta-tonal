@@ -7,7 +7,7 @@
  */
 
 import { Soundfont } from "smplr";
-import { getAudioContext } from "./context";
+import { getAudioContext, getOutput } from "./context";
 import type { Synth, Voice } from "./synth";
 
 /** Soundfont local (bundleado en public/). Sin internet. */
@@ -16,7 +16,7 @@ const SOUNDFONT_URL = "/soundfonts/acoustic_grand_piano-mp3.js";
 export function createSampler(): Synth {
   const ctx = getAudioContext();
   // Empieza a cargar las muestras al crearse (preload).
-  const piano = Soundfont(ctx, { instrumentUrl: SOUNDFONT_URL });
+  const piano = Soundfont(ctx, { instrumentUrl: SOUNDFONT_URL, destination: getOutput() });
   let loaded = false;
   void piano.ready.then(() => {
     loaded = true;
