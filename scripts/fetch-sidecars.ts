@@ -32,7 +32,11 @@ import { join } from "node:path";
 
 const YT_DLP = "https://github.com/yt-dlp/yt-dlp/releases/latest/download";
 const DENO = "https://github.com/denoland/deno/releases/latest/download";
-const WHISPER = "https://github.com/ggml-org/whisper.cpp/releases/latest/download";
+// whisper.cpp va FIJO, no `latest`: v1.9.3 y v1.9.4 salieron sin binarios y el
+// `latest` vacio rompio el release de Windows (404). Subirlo a mano, chequeando
+// que el tag traiga `whisper-bin-x64.zip`.
+const WHISPER_TAG = "v1.9.2";
+const WHISPER = `https://github.com/ggml-org/whisper.cpp/releases/download/${WHISPER_TAG}`;
 
 // NO hay soporte para `universal-apple-darwin`, y no es un descuido: `ort`
 // (los bindings de ONNX Runtime que arrastra la separacion de voz) publica un
@@ -189,7 +193,7 @@ async function fetchWhisper(): Promise<void> {
       // No hay binario publicado para macOS: se compila.
       const arches = triple.includes("aarch64") ? "arm64" : "x86_64";
       console.log(`whisper compilando desde el fuente (${arches}) — necesita cmake`);
-      execFileSync("git", ["clone", "--depth", "1", "https://github.com/ggml-org/whisper.cpp", work + "/src"], { stdio: "inherit" });
+      execFileSync("git", ["clone", "--depth", "1", "--branch", WHISPER_TAG, "https://github.com/ggml-org/whisper.cpp", work + "/src"], { stdio: "inherit" });
       execFileSync("cmake", ["-B", `${work}/build`, "-S", `${work}/src`,
         `-DCMAKE_OSX_ARCHITECTURES=${arches}`, "-DBUILD_SHARED_LIBS=OFF", "-DWHISPER_BUILD_TESTS=OFF",
         "-DWHISPER_BUILD_EXAMPLES=ON", "-DCMAKE_BUILD_TYPE=Release"], { stdio: "inherit" });
