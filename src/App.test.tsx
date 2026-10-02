@@ -61,7 +61,8 @@ test("los desplegables del panel se abren dentro del modal y no detrás", async 
   await user.click(screen.getByRole("button", { name: "Configuración" }));
   await user.click(screen.getByRole("combobox", { name: "Tipo de sonido" }));
 
-  const dialog = document.querySelector("dialog")!;
+  // Por aria-label y no por tag: ahora hay mas de un <dialog> en el DOM.
+  const dialog = document.querySelector('dialog[aria-label="Configuración"]')!;
   const option = await screen.findByRole("option", { name: "Triangular" });
   expect(dialog.contains(option)).toBe(true);
 });
